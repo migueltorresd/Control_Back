@@ -14,7 +14,7 @@ export class ReferenciasRepository extends Repository<Referencia> {
 
   async findAllWithRelations(): Promise<Referencia[]> {
     return this.find({
-      relations: ['tarifas', 'receta', 'receta.material'],
+      relations: { tarifas: true, receta: { material: true } },
       order: { id: 'ASC' },
     });
   }
@@ -22,7 +22,7 @@ export class ReferenciasRepository extends Repository<Referencia> {
   async findByIdWithRelations(id: string): Promise<Referencia | null> {
     return this.findOne({
       where: { id },
-      relations: ['tarifas', 'receta', 'receta.material'],
+      relations: { tarifas: true, receta: { material: true } },
     });
   }
 
@@ -61,7 +61,7 @@ export class ReferenciasRepository extends Repository<Referencia> {
       // Retornar la referencia creada con sus relaciones
       const result = await manager.findOne(Referencia, {
         where: { id: savedRef.id },
-        relations: ['tarifas', 'receta', 'receta.material']
+        relations: { tarifas: true, receta: { material: true } }
       });
       return result!;
     });
@@ -105,7 +105,7 @@ export class ReferenciasRepository extends Repository<Referencia> {
 
       return manager.findOne(Referencia, {
         where: { id },
-        relations: ['tarifas', 'receta', 'receta.material']
+        relations: { tarifas: true, receta: { material: true } }
       });
     });
   }
