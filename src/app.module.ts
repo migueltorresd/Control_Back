@@ -1,25 +1,23 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 
-// Entities
-import { Material } from './entities/material.entity';
-import { Referencia } from './entities/referencia.entity';
-import { Operario } from './entities/operario.entity';
-import { Vale } from './entities/vale.entity';
-import { ProduccionReg } from './entities/produccion-reg.entity';
-import { Venta } from './entities/venta.entity';
-import { Pago } from './entities/pago.entity';
+// Modules nuevos
+import { MaterialesModule } from './modules/materiales/materiales.module';
+import { ReferenciasModule } from './modules/referencias/referencias.module';
+import { OperariosModule } from './modules/operarios/operarios.module';
+import { ValesModule } from './modules/vales/vales.module';
+import { PagosModule } from './modules/pagos/pagos.module';
+import { VentasModule } from './modules/ventas/ventas.module';
 
-// Controllers
-import { OperariosController } from './controllers/operarios.controller';
-import { MaterialesController } from './controllers/materiales.controller';
-import { ReferenciasController } from './controllers/referencias.controller';
-import { ValesController } from './controllers/vales.controller';
-import { VentasController } from './controllers/ventas.controller';
-import { PagosController } from './controllers/pagos.controller';
+// Entities modularizados (para SeedService)
+import { Material } from './modules/materiales/entities/material.entity';
+import { Referencia } from './modules/referencias/entities/referencia.entity';
+import { Operario } from './modules/operarios/entities/operario.entity';
+import { Vale } from './modules/vales/entities/vale.entity';
+import { ProduccionReg } from './modules/vales/entities/produccion-reg.entity';
+import { Venta } from './modules/ventas/entities/venta.entity';
+import { Pago } from './modules/pagos/entities/pago.entity';
 
 // Services
 import { SeedService } from './services/seed.service';
@@ -34,22 +32,19 @@ import { SeedService } from './services/seed.service';
       username: process.env.DATABASE_USERNAME || 'postgres',
       password: process.env.DATABASE_PASSWORD || 'postgres',
       database: process.env.DATABASE_DATABASE || 'control_produccion',
-      entities: [Material, Referencia, Operario, Vale, ProduccionReg, Venta, Pago],
+      autoLoadEntities: true, // Carga las entidades registradas en cada módulo automáticamente
       synchronize: true, // Auto-create schemas in development
     }),
-    TypeOrmModule.forFeature([Material, Referencia, Operario, Vale, ProduccionReg, Venta, Pago]),
+    TypeOrmModule.forFeature([Material, Referencia, Operario, Vale, ProduccionReg, Venta, Pago]), // Para uso de SeedService
+    MaterialesModule,
+    ReferenciasModule,
+    OperariosModule,
+    ValesModule,
+    PagosModule,
+    VentasModule,
   ],
-  controllers: [
-    AppController,
-    OperariosController,
-    MaterialesController,
-    ReferenciasController,
-    ValesController,
-    VentasController,
-    PagosController,
-  ],
+  controllers: [],
   providers: [
-    AppService,
     SeedService,
   ],
 })
