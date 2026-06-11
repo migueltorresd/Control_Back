@@ -1,8 +1,10 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
-// Modules nuevos
+import { envValidationSchema } from './config/env.validation';
+
+// Módulos de negocio
 import { MaterialesModule } from './modules/materiales/materiales.module';
 import { ReferenciasModule } from './modules/referencias/referencias.module';
 import { OperariosModule } from './modules/operarios/operarios.module';
@@ -10,7 +12,7 @@ import { ValesModule } from './modules/vales/vales.module';
 import { PagosModule } from './modules/pagos/pagos.module';
 import { VentasModule } from './modules/ventas/ventas.module';
 
-// Entities modularizados (para SeedService)
+// Entidades para SeedService
 import { Material } from './modules/materiales/entities/material.entity';
 import { Referencia } from './modules/referencias/entities/referencia.entity';
 import { Operario } from './modules/operarios/entities/operario.entity';
@@ -24,18 +26,24 @@ import { SeedService } from './services/seed.service';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: process.env.DATABASE_HOST || 'localhost',
-      port: parseInt(process.env.DATABASE_PORT || '5432'),
-      username: process.env.DATABASE_USERNAME || 'postgres',
-      password: process.env.DATABASE_PASSWORD || 'postgres',
-      database: process.env.DATABASE_DATABASE || 'control_produccion',
-      autoLoadEntities: true, // Carga las entidades registradas en cada módulo automáticamente
-      synchronize: true, // Auto-create schemas in development
+    ConfigModule.forRoot({
+      isGlobal: true,
+      validationSchema: envValidationSchema,
     }),
-    TypeOrmModule.forFeature([Material, Referencia, Operario, Vale, ProduccionReg, Venta, Pago]), // Para uso de SeedService
+    TypeOrmModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        type: 'postgres',
+        host: config.get<string>('DATABASE_HOST'),
+        port: config.get<number>('DATABASE_PORT'),
+        username: config.get<string>('DATABASE_USERNAME'),
+        password: config.get<string>('DATABASE_PASSWORD'),
+        database: config.get<string>('DATABASE_DATABASE'),
+        autoLoadEntities: true,
+        synchronize: true, // Se elimina en tarea 1.2 al implementar migraciones
+      }),
+    }),
+    TypeOrmModule.forFeature([Material, Referencia, Operario, Vale, ProduccionReg, Venta, Pago]),
     MaterialesModule,
     ReferenciasModule,
     OperariosModule,
@@ -44,8 +52,6 @@ import { SeedService } from './services/seed.service';
     VentasModule,
   ],
   controllers: [],
-  providers: [
-    SeedService,
-  ],
+  providers: [SeedService],
 })
 export class AppModule {}
