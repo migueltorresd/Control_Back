@@ -22,6 +22,18 @@ Al terminar cada tarea: verifica el criterio de aceptación, marca el checkbox a
 7. Toda variable de entorno nueva se añade a `.env.example` y al esquema de validación Joi (existente desde la tarea 1.1).
 8. **Prohibido inventar alcance**: hacer exactamente lo que la tarea pide, nada más. Sin refactors oportunistas, sin dependencias no listadas en la tarea, sin renombrar archivos/rutas que la tarea no menciona, sin "mejoras" extra. Si un paso admite dos interpretaciones, elegir la **más simple** que cumpla el criterio de aceptación y anotar la decisión en el mensaje del commit. Si algo bloquea la tarea (un supuesto que no se cumple en el código real), **detenerse y reportarlo** en vez de improvisar una solución.
 
+## Verificación de tareas completadas (protocolo de auditoría)
+
+Una tarea no se marca ✅ por tener un commit con el nombre correcto — se marca cuando se **auditó contra sus criterios de aceptación, ejecutándolos literalmente**. Protocolo (aplicado por primera vez el 2026-06-11 sobre 0.1 y 1.1):
+
+1. **Revisar el código** contra los pasos de la tarea (archivos creados/eliminados/modificados coinciden con lo especificado).
+2. **Ejecutar cada criterio de aceptación tal como está escrito**, no asumirlo: si dice "sin `.env` la app no arranca", renombrar el `.env`, arrancar, ver el error y restaurar; si dice "`GET /vales` responde", levantar BD + app y hacer el request. Los greps del criterio se corren de verdad.
+3. **Correr `pnpm build` y `pnpm test`**; `pnpm lint` se compara contra la línea base (regla 4).
+4. **Dejar registro en el archivo de la tarea**: sección `## Registro de verificación` con fecha, qué se ejecutó y el resultado. Sin registro, la tarea no está verificada.
+5. Solo entonces: checkbox ✅ en este índice (con el hash del commit) y en el tablero del plan maestro.
+
+> Si la auditoría encuentra un desvío, no se marca la tarea: se anota el hallazgo en el registro y se corrige (en la misma tarea si es de su alcance, o anotándolo en la tarea futura que corresponda — como se hizo con los 67 errores de lint preexistentes → tarea 5.1).
+
 ## Orden de ejecución
 
 | ✓ | Tarea | Archivo | Fase |
