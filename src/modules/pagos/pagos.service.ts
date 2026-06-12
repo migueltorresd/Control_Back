@@ -7,6 +7,7 @@ import { PagosRepository } from './pagos.repository';
 import { ProduccionService } from '../vales/produccion.service';
 import { Pago } from './entities/pago.entity';
 import { EstadoProduccion } from '../../common/enums/estado-produccion.enum';
+import { Oficio } from '../../common/enums/oficio.enum';
 import { ProduccionReg } from '../vales/entities/produccion-reg.entity';
 import { Vale } from '../vales/entities/vale.entity';
 
@@ -52,9 +53,7 @@ export class PagosService {
       });
 
       if (!vale) {
-        throw new NotFoundException(
-          `Vale con ID ${reg.valeId} no encontrado`,
-        );
+        throw new NotFoundException(`Vale con ID ${reg.valeId} no encontrado`);
       }
 
       const fecha = new Date().toISOString().split('T')[0];
@@ -90,7 +89,7 @@ export class PagosService {
 
   // Pagar lote de registros
   async pagarLote(
-    items: { vale: string; etapa: string; regId: string }[],
+    items: { vale: string; etapa: Oficio; regId: string }[],
   ): Promise<Pago[]> {
     return this.repository.dataSource.transaction(async (manager) => {
       const pagos: Pago[] = [];

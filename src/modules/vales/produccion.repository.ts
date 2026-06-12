@@ -7,7 +7,7 @@ import { EstadoProduccion } from '../../common/enums/estado-produccion.enum';
 
 @Injectable()
 export class ProduccionRepository extends Repository<ProduccionReg> {
-  constructor(private dataSource: DataSource) {
+  constructor(public readonly dataSource: DataSource) {
     super(ProduccionReg, dataSource.createEntityManager());
   }
 
@@ -35,15 +35,13 @@ export class ProduccionRepository extends Repository<ProduccionReg> {
    * 4. Inserta el nuevo registro.
    * Retorna null si se supera el cupo (el service lanza la excepción adecuada).
    */
-  async registrarProduccionAtomico(
-    regData: {
-      valeId: string;
-      etapa: Oficio;
-      operarioId: string;
-      pares: number;
-      totalParesVale: number;
-    },
-  ): Promise<{ reg: ProduccionReg | null; paresYaRegistrados: number }> {
+  async registrarProduccionAtomico(regData: {
+    valeId: string;
+    etapa: Oficio;
+    operarioId: string;
+    pares: number;
+    totalParesVale: number;
+  }): Promise<{ reg: ProduccionReg | null; paresYaRegistrados: number }> {
     return this.dataSource.transaction(async (manager) => {
       // 1. Bloquear la fila del vale para serializar requests concurrentes
       await manager.findOne(Vale, {
@@ -52,13 +50,13 @@ export class ProduccionRepository extends Repository<ProduccionReg> {
       });
 
       // 2. Sumar pares ya registrados para esta etapa (dentro del lock)
-      const result = await manager
+      const result = (await manager
         .createQueryBuilder(ProduccionReg, 'reg')
         .select('SUM(reg.pares)', 'sum')
         .where('reg.valeId = :valeId', { valeId: regData.valeId })
         .andWhere('reg.etapa = :etapa', { etapa: regData.etapa })
-        .getRawOne();
-      const paresYaRegistrados = parseInt(result.sum || '0', 10);
+        .getRawOne()) as { sum: string | null };
+      const paresYaRegistrados = parseInt(result.sum ?? '0', 10);
 
       // 3. Validar cupo — si supera, retornar sin insertar
       if (paresYaRegistrados + regData.pares > regData.totalParesVale) {

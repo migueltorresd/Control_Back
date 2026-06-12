@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { Request } from 'express';
 import { ValesService } from './vales.service';
-import { ProduccionService } from './produccion.service';
+import { ProduccionService, ResultadoRevision } from './produccion.service';
 import { CreateValeDto } from './dto/create-vale.dto';
 import { RegisterProduccionDto } from './dto/register-produccion.dto';
 import { UpdateProduccionEstadoDto } from './dto/update-produccion-estado.dto';
@@ -19,6 +19,7 @@ import { RevisarProduccionDto } from './dto/revisar-produccion.dto';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Rol } from '../auth/enums/rol.enum';
 import { UsuarioAutenticado } from '../auth/jwt.strategy';
+import { EstadoProduccion } from '../../common/enums/estado-produccion.enum';
 
 @Controller('vales')
 @Roles(Rol.ADMIN)
@@ -82,7 +83,7 @@ export class ValesController {
     @Param('regId') regId: string,
     @Body() dto: UpdateProduccionEstadoDto,
   ) {
-    if (dto.estado === 'aprobado') {
+    if (dto.estado === EstadoProduccion.APROBADO) {
       throw new BadRequestException(
         'Use el endpoint de revisión para aprobar producción',
       );
@@ -97,7 +98,7 @@ export class ValesController {
     @Param('regId') regId: string,
     @Body() dto: RevisarProduccionDto,
     @Req() req: Request & { user: UsuarioAutenticado },
-  ) {
+  ): Promise<ResultadoRevision> {
     const username = req.user?.username || null;
     return this.produccionService.revisar(valeId, regId, dto, username);
   }
@@ -111,15 +112,15 @@ export class ValesController {
     return { success: true };
   }
 
-  private mapToFrontend(v: any) {
+  private mapToFrontend(v: ValeRaw) {
     const tallasObj: Record<string, number> = {};
     if (v.tallas && Array.isArray(v.tallas)) {
-      v.tallas.forEach((t: any) => {
+      v.tallas.forEach((t) => {
         tallasObj[t.talla.toString()] = t.cantidad;
       });
     }
 
-    const produccion: Record<string, any[]> = {
+    const produccion: Record<string, ProduccionRegRaw[]> = {
       Cortador: [],
       Guarnecedor: [],
       Solador: [],
@@ -127,7 +128,7 @@ export class ValesController {
     };
 
     if (v.produccion && Array.isArray(v.produccion)) {
-      v.produccion.forEach((r: any) => {
+      v.produccion.forEach((r) => {
         if (produccion[r.etapa]) {
           produccion[r.etapa].push({
             id: r.id,
@@ -137,12 +138,13 @@ export class ValesController {
             montoPagado: Number(r.montoPagado),
             revisadoPor: r.revisadoPor,
             revisadoEn: r.revisadoEn,
+            etapa: r.etapa,
           });
         }
       });
     }
 
-    const rechazos: Record<string, any[]> = {
+    const rechazos: Record<string, RechazoRaw[]> = {
       Cortador: [],
       Guarnecedor: [],
       Solador: [],
@@ -150,13 +152,14 @@ export class ValesController {
     };
 
     if (v.rechazos && Array.isArray(v.rechazos)) {
-      v.rechazos.forEach((r: any) => {
+      v.rechazos.forEach((r) => {
         if (rechazos[r.etapa]) {
           rechazos[r.etapa].push({
             pares: r.pares,
             motivo: r.motivo,
             fecha: r.fecha,
             operarioId: r.operarioId,
+            etapa: r.etapa,
           });
         }
       });
@@ -174,4 +177,42 @@ export class ValesController {
       rechazos,
     };
   }
+}
+
+// ── tipos locales para tipado interno del mapper ─────────────────────────────
+
+interface TallaRaw {
+  talla: number;
+  cantidad: number;
+}
+
+interface ProduccionRegRaw {
+  id: string;
+  operarioId: string;
+  pares: number;
+  estado: string;
+  montoPagado: number | string | null;
+  revisadoPor: string | null;
+  revisadoEn: string | null;
+  etapa: string;
+}
+
+interface RechazoRaw {
+  pares: number;
+  motivo: string;
+  fecha: string;
+  operarioId: string;
+  etapa: string;
+}
+
+interface ValeRaw {
+  id: string;
+  fecha: string;
+  almacen: string;
+  referenciaId: string;
+  color: string;
+  altura: string;
+  tallas: TallaRaw[];
+  produccion: ProduccionRegRaw[];
+  rechazos: RechazoRaw[];
 }

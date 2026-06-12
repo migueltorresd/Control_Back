@@ -102,7 +102,10 @@ export class ReferenciasService {
   ): Promise<Referencia> {
     const referencia = await this.findOne(id);
 
-    const uploadsDir = this.configService.get<string>('UPLOADS_DIR', './uploads');
+    const uploadsDir = this.configService.get<string>(
+      'UPLOADS_DIR',
+      './uploads',
+    );
     const referenciasDir = path.join(uploadsDir, 'referencias');
     if (!fs.existsSync(referenciasDir)) {
       fs.mkdirSync(referenciasDir, { recursive: true });
@@ -112,7 +115,10 @@ export class ReferenciasService {
       path.extname(file.originalname).substring(1).toLowerCase() || 'jpg';
 
     if (referencia.imagenExt && referencia.imagenExt !== ext) {
-      const oldPath = path.join(referenciasDir, `${id}.${referencia.imagenExt}`);
+      const oldPath = path.join(
+        referenciasDir,
+        `${id}.${referencia.imagenExt}`,
+      );
       if (fs.existsSync(oldPath)) {
         try {
           fs.unlinkSync(oldPath);
@@ -139,7 +145,10 @@ export class ReferenciasService {
       );
     }
 
-    const uploadsDir = this.configService.get<string>('UPLOADS_DIR', './uploads');
+    const uploadsDir = this.configService.get<string>(
+      'UPLOADS_DIR',
+      './uploads',
+    );
     const filePath = path.resolve(
       path.join(uploadsDir, 'referencias', `${id}.${referencia.imagenExt}`),
     );
@@ -156,7 +165,8 @@ export class ReferenciasService {
       png: 'image/png',
       webp: 'image/webp',
     };
-    const mimeType = mimeMap[referencia.imagenExt] || 'application/octet-stream';
+    const mimeType =
+      mimeMap[referencia.imagenExt] || 'application/octet-stream';
 
     return { filePath, mimeType };
   }
@@ -164,7 +174,10 @@ export class ReferenciasService {
   async deleteImagen(id: string): Promise<Referencia> {
     const referencia = await this.findOne(id);
     if (referencia.imagenExt) {
-      const uploadsDir = this.configService.get<string>('UPLOADS_DIR', './uploads');
+      const uploadsDir = this.configService.get<string>(
+        'UPLOADS_DIR',
+        './uploads',
+      );
       const filePath = path.join(
         uploadsDir,
         'referencias',

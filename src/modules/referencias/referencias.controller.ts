@@ -16,6 +16,7 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { createReadStream } from 'fs';
 import { ReferenciasService } from './referencias.service';
+import { Referencia } from './entities/referencia.entity';
 import { CreateReferenciaDto } from './dto/create-referencia.dto';
 import { UpdateReferenciaDto } from './dto/update-referencia.dto';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -27,7 +28,7 @@ class CustomFileTypeValidator extends FileValidator<{ fileType: RegExp }> {
     super(validationOptions);
   }
 
-  isValid(file: any): boolean {
+  isValid(file: Express.Multer.File | undefined): boolean {
     if (!file || !file.mimetype) return false;
     return this.validationOptions.fileType.test(file.mimetype);
   }
@@ -56,7 +57,7 @@ export class ReferenciasController {
 
   @Post()
   async save(@Body() dto: CreateReferenciaDto & { id?: string }) {
-    let saved;
+    let saved: Referencia;
     if (dto.id) {
       const { id, ...updateData } = dto;
       const updateDto: UpdateReferenciaDto = updateData;
@@ -94,7 +95,7 @@ export class ReferenciasController {
   @Public()
   async getImagen(
     @Param('id') id: string,
-    @Res({ passthrough: true }) res: any,
+    @Res({ passthrough: true }) res: import('express').Response,
   ) {
     const { filePath, mimeType } =
       await this.referenciasService.getImagenPathAndMime(id);
@@ -112,7 +113,7 @@ export class ReferenciasController {
     return { success: true };
   }
 
-  private mapToFrontend(r: any) {
+  private mapToFrontend(r: Referencia) {
     return {
       id: r.id,
       nombre: r.nombre,
@@ -125,5 +126,3 @@ export class ReferenciasController {
     };
   }
 }
-
-

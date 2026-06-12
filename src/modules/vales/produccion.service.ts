@@ -13,7 +13,15 @@ import { RegisterProduccionDto } from './dto/register-produccion.dto';
 import { RevisarProduccionDto } from './dto/revisar-produccion.dto';
 import { ProduccionReg } from './entities/produccion-reg.entity';
 import { Rechazo } from './entities/rechazo.entity';
+import { Vale } from './entities/vale.entity';
 import { EstadoProduccion } from '../../common/enums/estado-produccion.enum';
+
+export interface ResultadoRevision {
+  success: boolean;
+  deleted: boolean;
+  paresAprobados: number;
+  paresRechazados: number;
+}
 
 @Injectable()
 export class ProduccionService {
@@ -186,12 +194,11 @@ export class ProduccionService {
     regId: string,
     dto: RevisarProduccionDto,
     username: string | null,
-  ): Promise<any> {
+  ): Promise<ResultadoRevision> {
     return this.repository.dataSource.transaction(async (manager) => {
-      // 1. Obtener y bloquear el registro con pessimistic_write
+      // 1. Obtener y bloquear el registro con pessimistic_write (sin join)
       const reg = await manager.findOne(ProduccionReg, {
         where: { id: regId },
-        relations: { vale: true },
         lock: { mode: 'pessimistic_write' },
       });
 
@@ -213,15 +220,16 @@ export class ProduccionService {
         );
       }
 
-      const { paresAprobados, motivo } = dto;
+      const { paresAprobados } = dto;
       if (paresAprobados < 0 || paresAprobados > reg.pares) {
         throw new BadRequestException(
           `La cantidad de pares aprobados (${paresAprobados}) debe estar entre 0 y ${reg.pares}`,
         );
       }
 
+      const motivoTrim = dto.motivo?.trim() ?? '';
       const paresRechazados = reg.pares - paresAprobados;
-      if (paresRechazados > 0 && (!motivo || !motivo.trim())) {
+      if (paresRechazados > 0 && !motivoTrim) {
         throw new BadRequestException('Indique el motivo del rechazo');
       }
 
@@ -239,7 +247,7 @@ export class ProduccionService {
           etapa: reg.etapa,
           operarioId: reg.operarioId,
           pares: paresRechazados,
-          motivo: motivo.trim(),
+          motivo: motivoTrim,
           registroId: reg.id,
         });
         await manager.save(Rechazo, rechazo);
@@ -248,11 +256,24 @@ export class ProduccionService {
       // 3. Si paresAprobados === 0: eliminar registro de producción
       if (paresAprobados === 0) {
         await manager.remove(ProduccionReg, reg);
-        return { success: true, deleted: true, paresAprobados: 0, paresRechazados };
+        return {
+          success: true,
+          deleted: true,
+          paresAprobados: 0,
+          paresRechazados,
+        };
+      }
+
+      // Obtener el vale por separado para conocer la referencia
+      const vale = await manager.findOne(Vale, {
+        where: { id: reg.valeId },
+      });
+      if (!vale) {
+        throw new NotFoundException(`Vale ${reg.valeId} no encontrado`);
       }
 
       // 4. Si paresAprobados > 0: calcular tarifa y actualizar
-      const ref = await this.referenciasService.findOne(reg.vale.referenciaId);
+      const ref = await this.referenciasService.findOne(vale.referenciaId);
       const tarifaObj = ref.tarifas.find((t) => t.oficio === reg.etapa);
       if (!tarifaObj) {
         throw new BadRequestException(
@@ -273,7 +294,7 @@ export class ProduccionService {
   }
 
   async findRechazos(valeId?: string, operarioId?: string): Promise<Rechazo[]> {
-    const where: any = {};
+    const where: Partial<Rechazo> = {};
     if (valeId) where.valeId = valeId;
     if (operarioId) where.operarioId = operarioId;
     return this.repository.manager.find(Rechazo, {

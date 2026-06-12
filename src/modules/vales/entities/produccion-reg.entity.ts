@@ -37,7 +37,8 @@ export class ProduccionReg {
   pares: number;
 
   @Column({
-    type: 'varchar',
+    type: 'enum',
+    enum: EstadoProduccion,
     default: EstadoProduccion.REGISTRADO,
   })
   estado: EstadoProduccion;

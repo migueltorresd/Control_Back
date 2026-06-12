@@ -34,9 +34,12 @@ export class ValesRepository extends Repository<Vale> {
   }
 
   async nextId(manager: EntityManager): Promise<string> {
-    const result = await manager.query(`SELECT nextval('vales_seq') AS n`);
-    const n = Number(result[0].n);
-    return 'V-' + String(n).padStart(4, '0');
+    const n = await queryScalar<string>(
+      manager,
+      `SELECT nextval('vales_seq') AS n`,
+      'n',
+    );
+    return 'V-' + String(Number(n)).padStart(4, '0');
   }
 
   async crearConRelaciones(
@@ -81,4 +84,16 @@ export class ValesRepository extends Repository<Vale> {
       return result!;
     });
   }
+}
+
+/** Helper tipado para queries escalares de TypeORM (manager.query devuelve any[]) */
+async function queryScalar<T>(
+  manager: EntityManager,
+  sql: string,
+  col: string,
+): Promise<T> {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  const rows = await manager.query(sql);
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+  return rows[0][col] as T;
 }
