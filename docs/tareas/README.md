@@ -54,7 +54,7 @@ Una tarea no se marca ✅ por tener un commit con el nombre correcto — se marc
 | ✅ | 3.2 Unit tests de negocio | [3.2-unit-tests.md](3.2-unit-tests.md) — commit `a6561fd` | 3 |
 | ✅ | 3.3 Test e2e del flujo completo | [3.3-e2e-tests.md](3.3-e2e-tests.md) — commit `bbe5f71` | 3 |
 | ✅ | 3.4 CI + Dependabot | [3.4-ci.md](3.4-ci.md) — commit `28ebad6` | 3 |
-| ⬜ | 4.1 Logging estructurado | [4.1-logging.md](4.1-logging.md) | 4 — Operabilidad |
+| ✅ | 4.1 Logging estructurado | [4.1-logging.md](4.1-logging.md) — commit `706f647` | 4 — Operabilidad |
 | ⬜ | 4.2 Auditoría mínima | [4.2-auditoria.md](4.2-auditoria.md) | 4 |
 | ⬜ | 4.3 Swagger | [4.3-swagger.md](4.3-swagger.md) | 4 |
 | ⬜ | 4.4 Health check | [4.4-health-check.md](4.4-health-check.md) | 4 |
