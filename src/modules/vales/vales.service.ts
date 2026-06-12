@@ -35,21 +35,9 @@ export class ValesService {
     // 1. Validar que la referencia exista usando el ReferenciasService
     await this.referenciasService.findOne(dto.referenciaId);
 
-    // 2. Generar el ID secuencial V-XXXX (4 dígitos)
-    const last = await this.repository.findLast();
-    let nextNum = 1;
-    if (last) {
-      const parts = last.id.split('-');
-      if (parts.length > 1) {
-        nextNum = parseInt(parts[1], 10) + 1;
-      }
-    }
-    const nextId = 'V-' + String(nextNum).padStart(4, '0');
-
-    // 3. Delegar la creación transaccional al repositorio
+    // 2. Delegar la creación transaccional al repositorio (el ID lo genera la secuencia vales_seq)
     return this.repository.crearConRelaciones(
       {
-        id: nextId,
         fecha: dto.fecha,
         almacen: dto.almacen,
         color: dto.color,

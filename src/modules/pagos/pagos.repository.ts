@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, Repository, EntityManager } from 'typeorm';
+import { DataSource, EntityManager, Repository } from 'typeorm';
 import { Pago } from './entities/pago.entity';
 
 @Injectable()
@@ -47,10 +47,15 @@ export class PagosRepository extends Repository<Pago> {
     });
   }
 
+  async nextId(manager: EntityManager): Promise<string> {
+    const result = await manager.query(`SELECT nextval('pagos_seq') AS n`);
+    const n = Number(result[0].n);
+    return 'PG-' + String(n).padStart(4, '0');
+  }
+
   // Transacción para registrar un solo pago
   async registrarPagoTransaccional(
     pagoData: {
-      id: string;
       fecha: string;
       operarioId: string;
       valeId: string;
@@ -63,11 +68,14 @@ export class PagosRepository extends Repository<Pago> {
     updateProduccionFn: (manager: EntityManager) => Promise<void>,
   ): Promise<Pago> {
     return this.dataSource.transaction(async (manager) => {
-      // 1. Ejecutar la callback que actualiza el estado de producción usando el manager
+      // 1. Ejecutar la callback que actualiza el estado de producción
       await updateProduccionFn(manager);
 
-      // 2. Guardar el pago
-      const newPago = manager.create(Pago, pagoData);
+      // 2. Obtener el siguiente ID de la secuencia (dentro de la transacción)
+      const id = await this.nextId(manager);
+
+      // 3. Guardar el pago
+      const newPago = manager.create(Pago, { ...pagoData, id });
       return manager.save(Pago, newPago);
     });
   }
@@ -75,7 +83,6 @@ export class PagosRepository extends Repository<Pago> {
   // Transacción para registrar pagos en lote
   async registrarPagosEnLoteTransaccional(
     pagosData: {
-      id: string;
       fecha: string;
       operarioId: string;
       valeId: string;
@@ -88,11 +95,18 @@ export class PagosRepository extends Repository<Pago> {
     updateProduccionFn: (manager: EntityManager) => Promise<void>,
   ): Promise<Pago[]> {
     return this.dataSource.transaction(async (manager) => {
-      // 1. Ejecutar la callback que actualiza todos los registros de producción en lote
+      // 1. Ejecutar la callback que actualiza todos los registros de producción
       await updateProduccionFn(manager);
 
-      // 2. Guardar los pagos
-      const pagos = pagosData.map((p) => manager.create(Pago, p));
+      // 2. Obtener IDs secuenciales para todos los pagos del lote (dentro de la transacción)
+      const pagos: Pago[] = [];
+      for (const pagoData of pagosData) {
+        const id = await this.nextId(manager);
+        const pago = manager.create(Pago, { ...pagoData, id });
+        pagos.push(pago);
+      }
+
+      // 3. Guardar todos los pagos
       return manager.save(Pago, pagos);
     });
   }

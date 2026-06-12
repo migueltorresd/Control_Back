@@ -33,10 +33,8 @@ export class PagosService {
     }
 
     const fecha = new Date().toISOString().split('T')[0];
-    const pagoId = `PG-${Date.now()}-${reg.id.slice(0, 8)}`;
 
     const pagoData = {
-      id: pagoId,
       fecha,
       operarioId: reg.operarioId,
       valeId: reg.valeId,
@@ -84,11 +82,9 @@ export class PagosService {
     }
 
     const fecha = new Date().toISOString().split('T')[0];
-    const timestamp = Date.now();
 
-    // 2. Preparar los payloads de pago
-    const pagosData = validados.map((reg, index) => ({
-      id: `PG-${timestamp}-${index}-${reg.id.slice(0, 5)}`,
+    // 2. Preparar los payloads de pago (el ID lo genera la secuencia pagos_seq dentro de la transacción)
+    const pagosData = validados.map((reg) => ({
       fecha,
       operarioId: reg.operarioId,
       valeId: reg.valeId,

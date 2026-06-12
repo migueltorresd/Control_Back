@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, EntityManager, Repository } from 'typeorm';
 import { Vale } from './entities/vale.entity';
 import { ValeTalla } from './entities/vale-talla.entity';
 
@@ -31,13 +31,14 @@ export class ValesRepository extends Repository<Vale> {
     });
   }
 
-  async findLast(): Promise<Vale | null> {
-    return this.findOne({ where: {}, order: { id: 'DESC' } });
+  async nextId(manager: EntityManager): Promise<string> {
+    const result = await manager.query(`SELECT nextval('vales_seq') AS n`);
+    const n = Number(result[0].n);
+    return 'V-' + String(n).padStart(4, '0');
   }
 
   async crearConRelaciones(
     valeData: {
-      id: string;
       fecha: string;
       almacen: string;
       color: string;
@@ -47,8 +48,11 @@ export class ValesRepository extends Repository<Vale> {
     tallasData: { talla: number; cantidad: number }[],
   ): Promise<Vale> {
     return this.dataSource.transaction(async (manager) => {
-      // 1. Guardar el Vale
-      const newVale = manager.create(Vale, valeData);
+      // 1. Obtener el siguiente ID de la secuencia (dentro de la transacción)
+      const id = await this.nextId(manager);
+
+      // 2. Guardar el Vale
+      const newVale = manager.create(Vale, { ...valeData, id });
       const savedVale = await manager.save(Vale, newVale);
 
       // 2. Guardar las Tallas del vale

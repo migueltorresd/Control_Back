@@ -28,33 +28,18 @@ export class VentasService {
     // 1. Validar que el vale exista
     await this.valesService.findOne(dto.valeId);
 
-    // 2. Generar el ID secuencial VT-XXXX
-    const last = await this.repository.findLast();
-    let lastNum = 0;
-    if (last && last.id.startsWith('VT-')) {
-      const parts = last.id.split('-');
-      if (parts.length > 1) {
-        const parsed = parseInt(parts[1], 10);
-        if (!isNaN(parsed)) {
-          lastNum = parsed;
-        }
-      }
-    }
-    const nextId = `VT-${String(lastNum + 1).padStart(4, '0')}`;
-
-    // 3. Establecer fecha por defecto si no viene
+    // 2. Establecer fecha por defecto si no viene
     const fecha = dto.fecha || new Date().toISOString().split('T')[0];
 
-    // 4. Crear y guardar
+    // 3. Crear y guardar (el ID lo genera la secuencia ventas_seq)
     const saved = await this.repository.createAndSave({
-      id: nextId,
       valeId: dto.valeId,
       pares: dto.pares,
       precioUnitario: dto.precioUnitario,
       fecha,
     });
 
-    // 5. Retornar la venta completa con sus relaciones cargadas
+    // 4. Retornar la venta completa con sus relaciones cargadas
     return this.findOne(saved.id);
   }
 

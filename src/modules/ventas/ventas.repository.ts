@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, EntityManager, Repository } from 'typeorm';
 import { Venta } from './entities/venta.entity';
 
 @Injectable()
@@ -30,15 +30,17 @@ export class VentasRepository extends Repository<Venta> {
     });
   }
 
-  async findLast(): Promise<Venta | null> {
-    return this.findOne({
-      where: {},
-      order: { id: 'DESC' },
-    });
+  async nextId(manager: EntityManager): Promise<string> {
+    const result = await manager.query(`SELECT nextval('ventas_seq') AS n`);
+    const n = Number(result[0].n);
+    return 'VT-' + String(n).padStart(4, '0');
   }
 
-  async createAndSave(ventaData: Partial<Venta>): Promise<Venta> {
-    const newVenta = this.create(ventaData);
-    return this.save(newVenta);
+  async createAndSave(ventaData: Omit<Partial<Venta>, 'id'>): Promise<Venta> {
+    return this.dataSource.transaction(async (manager) => {
+      const id = await this.nextId(manager);
+      const newVenta = manager.create(Venta, { ...ventaData, id });
+      return manager.save(Venta, newVenta);
+    });
   }
 }
