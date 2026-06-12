@@ -166,11 +166,19 @@ describe('Flujo de negocio completo (e2e)', () => {
   });
 
   it('aprobar → congela el monto (pares × tarifa)', async () => {
+    // Intentar cambiar a aprobado mediante PATCH directo debe fallar con 400
     await request(app.getHttpServer())
       .patch(`/api/v1/vales/V-0001/registro/${regId}`)
       .set(auth())
       .send({ estado: 'aprobado' })
-      .expect(200);
+      .expect(400);
+
+    // Aprobar a través del endpoint de revisión
+    await request(app.getHttpServer())
+      .post(`/api/v1/vales/V-0001/registro/${regId}/revision`)
+      .set(auth())
+      .send({ paresAprobados: 4 })
+      .expect(201);
 
     const reg = (await getVale()).produccion.Cortador[0];
     expect(reg.estado).toBe('aprobado');

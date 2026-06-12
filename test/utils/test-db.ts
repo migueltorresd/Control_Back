@@ -4,6 +4,7 @@ import { InitialSchema1781228207360 } from '../../src/migrations/1781228207360-I
 import { AddSequences1781230143161 } from '../../src/migrations/1781230143161-AddSequences';
 import { AddUsuarios1781232962762 } from '../../src/migrations/1781232962762-AddUsuarios';
 import { AddImagenExt1781264800698 } from '../../src/migrations/1781264800698-AddImagenExt';
+import { AddRechazo1781268064383 } from '../../src/migrations/1781268064383-AddRechazo';
 
 /** Base de datos dedicada para e2e — nunca la de desarrollo. */
 export const TEST_DB = 'control_produccion_test';
@@ -44,6 +45,7 @@ export async function prepararBaseDeDatosDeTest(): Promise<void> {
       AddSequences1781230143161,
       AddUsuarios1781232962762,
       AddImagenExt1781264800698,
+      AddRechazo1781268064383,
     ],
   });
   await ds.initialize();
