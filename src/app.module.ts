@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { envValidationSchema } from './config/env.validation';
@@ -38,6 +39,8 @@ import { VentasModule } from './modules/ventas/ventas.module';
         migrationsRun: false, // Las migraciones se corren manualmente: pnpm migration:run
       }),
     }),
+    // Rate limiting global: 100 requests/minuto por IP
+    ThrottlerModule.forRoot([{ ttl: 60000, limit: 100 }]),
     AuthModule,
     MaterialesModule,
     ReferenciasModule,
@@ -48,6 +51,8 @@ import { VentasModule } from './modules/ventas/ventas.module';
   ],
   controllers: [],
   providers: [
+    // Rate limiting antes de autenticar (protege también el login)
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
     // Fail-closed: primero autenticación, luego autorización por rol
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: RolesGuard },

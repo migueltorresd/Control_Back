@@ -9,6 +9,7 @@ import {
   Req,
 } from '@nestjs/common';
 import { Request } from 'express';
+import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
@@ -21,6 +22,8 @@ export class AuthController {
 
   @Public()
   @HttpCode(HttpStatus.OK)
+  // Límite estricto contra fuerza bruta: 5 intentos por minuto por IP
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post('login')
   async login(@Body() dto: LoginDto, @Ip() ip: string) {
     return this.authService.login(dto.username, dto.password, ip);

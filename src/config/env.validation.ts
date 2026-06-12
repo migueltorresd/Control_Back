@@ -18,6 +18,12 @@ export const envValidationSchema = Joi.object({
   }),
   JWT_EXPIRES_IN: Joi.string().default('8h'),
 
+  // CORS — orígenes permitidos del frontend (separados por comas)
+  CORS_ORIGIN: Joi.string().required().messages({
+    'any.required':
+      'CORS_ORIGIN es requerido (URL del frontend, p. ej. http://localhost:3000)',
+  }),
+
   // Entorno
   NODE_ENV: Joi.string()
     .valid('development', 'production', 'test')
