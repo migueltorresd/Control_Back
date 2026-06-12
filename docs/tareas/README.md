@@ -34,6 +34,8 @@ Una tarea no se marca ✅ por tener un commit con el nombre correcto — se marc
 
 > Si la auditoría encuentra un desvío, no se marca la tarea: se anota el hallazgo en el registro y se corrige (en la misma tarea si es de su alcance, o anotándolo en la tarea futura que corresponda — como se hizo con los 67 errores de lint preexistentes → tarea 5.1).
 
+⚠️ **Trampa conocida — `pnpm lint` modifica archivos**: el script de lint tiene `--fix` incorporado (`eslint ... --fix`), así que correrlo **reformatea el código** (prettier) además de reportar. Consecuencias prácticas: (1) en auditorías de solo-lectura, usar `pnpm exec eslint "{src,apps,libs,test}/**/*.ts"` **sin** `--fix`; (2) si una corrida de lint dejó cambios de formato masivos en el árbol, commitearlos **aparte y primero** (`style: apply prettier formatting via lint --fix`) para que el commit de la tarea contenga solo sus cambios reales. Detectado el 2026-06-11: la auditoría de 0.1/1.1 reformateó ~47 archivos que se mezclaron con el inicio de la 1.2.
+
 ## Orden de ejecución
 
 | ✓ | Tarea | Archivo | Fase |
