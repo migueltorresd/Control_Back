@@ -1,4 +1,11 @@
-import { IsNotEmpty, IsString, IsOptional, IsObject } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsString,
+  IsOptional,
+  IsObject,
+  Validate,
+} from 'class-validator';
+import { TallasValidator } from '../validators/tallas.validator';
 
 export class CreateValeDto {
   @IsOptional()
@@ -25,5 +32,6 @@ export class CreateValeDto {
   @IsObject({
     message: 'Las tallas deben ser un objeto clave-valor (ej. {"38": 5})',
   })
+  @Validate(TallasValidator)
   tallas: Record<string, number>;
 }
