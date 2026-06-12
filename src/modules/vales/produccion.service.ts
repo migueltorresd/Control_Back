@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  ConflictException,
 } from '@nestjs/common';
 import { EntityManager } from 'typeorm';
 import { ProduccionRepository } from './produccion.repository';
@@ -41,28 +42,27 @@ export class ProduccionService {
     // 2. Validar que el operario exista
     await this.operariosService.findOne(dto.operarioId);
 
-    // 3. Validar cupo disponible de producción para esta etapa en este vale
+    // 3. Calcular el cupo total del vale (no cambia durante la operación)
     const totalParesVale = vale.tallas.reduce((acc, t) => acc + t.cantidad, 0);
-    const paresYaRegistrados = await this.repository.sumParesByValeAndEtapa(
-      valeId,
-      dto.etapa,
-    );
 
-    if (paresYaRegistrados + dto.pares > totalParesVale) {
+    // 4. Registrar de forma atómica: bloqueo de vale + validación de cupo + insert
+    const { reg, paresYaRegistrados } =
+      await this.repository.registrarProduccionAtomico({
+        valeId,
+        etapa: dto.etapa,
+        operarioId: dto.operarioId,
+        pares: dto.pares,
+        totalParesVale,
+      });
+
+    if (!reg) {
       throw new BadRequestException(
         `Cupo superado en la etapa ${dto.etapa}. Se intentan registrar ${dto.pares} pares, pero ya hay ${paresYaRegistrados} de un límite de ${totalParesVale} pares en el vale.`,
       );
     }
 
-    // 4. Crear el registro en estado inicial 'registrado' y montoPagado 0
-    return this.repository.createAndSave({
-      valeId,
-      etapa: dto.etapa,
-      operarioId: dto.operarioId,
-      pares: dto.pares,
-      estado: EstadoProduccion.REGISTRADO,
-      montoPagado: 0,
-    });
+    // 5. Recargar con relaciones completas para la respuesta
+    return this.repository.findById(reg.id) as Promise<ProduccionReg>;
   }
 
   async updateEstado(
@@ -139,20 +139,22 @@ export class ProduccionService {
       );
     }
 
-    // 3. Persistir en base de datos
-    const updated = await this.repository.updateEstadoAndMonto(
+    // 3. Persistir de forma atómica: UPDATE WHERE estado = estadoActual
+    const actualizado = await this.repository.updateEstadoAtomico(
       regId,
+      estadoActual,
       nuevoEstado,
       nuevoMonto,
       manager,
     );
-    if (!updated) {
-      throw new BadRequestException(
-        `No se pudo actualizar el estado del registro de producción.`,
+
+    if (!actualizado) {
+      throw new ConflictException(
+        'El registro fue modificado por otra operación. Recargue e intente de nuevo.',
       );
     }
 
-    return updated;
+    return this.repository.findById(regId) as Promise<ProduccionReg>;
   }
 
   async deleteRegistro(

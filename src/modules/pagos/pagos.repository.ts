@@ -4,7 +4,7 @@ import { Pago } from './entities/pago.entity';
 
 @Injectable()
 export class PagosRepository extends Repository<Pago> {
-  constructor(private dataSource: DataSource) {
+  constructor(public readonly dataSource: DataSource) {
     super(Pago, dataSource.createEntityManager());
   }
 
