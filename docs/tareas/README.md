@@ -46,10 +46,10 @@ Una tarea no se marca ✅ por tener un commit con el nombre correcto — se marc
 | ✅ | 1.3 Seed como comando | [1.3-seed-comando.md](1.3-seed-comando.md) — commit `94c35e1` | 1 |
 | ✅ | 1.4 IDs por secuencia | [1.4-ids-secuencia.md](1.4-ids-secuencia.md) — commit `f5f2714` | 1 |
 | ✅ | 1.5 Operaciones atómicas | [1.5-operaciones-atomicas.md](1.5-operaciones-atomicas.md) — commit `8faf7d2` | 1 |
-| ⬜ | 2.1 Filtro de excepciones seguro | [2.1-filtro-excepciones.md](2.1-filtro-excepciones.md) | 2 — Seguridad perimetral |
-| ⬜ | 2.2 Autenticación JWT | [2.2-auth-jwt.md](2.2-auth-jwt.md) | 2 |
-| ⬜ | 2.3 Endurecimiento HTTP + /api/v1 | [2.3-endurecimiento-http.md](2.3-endurecimiento-http.md) | 2 |
-| ⬜ | 2.4 Login en el frontend | [2.4-login-frontend.md](2.4-login-frontend.md) | 2 |
+| ✅ | 2.1 Filtro de excepciones seguro | [2.1-filtro-excepciones.md](2.1-filtro-excepciones.md) — commit `3620338` | 2 — Seguridad perimetral |
+| ✅ | 2.2 Autenticación JWT | [2.2-auth-jwt.md](2.2-auth-jwt.md) — commit `428bba6` | 2 |
+| ✅ | 2.3 Endurecimiento HTTP + /api/v1 | [2.3-endurecimiento-http.md](2.3-endurecimiento-http.md) — commits `635c698`/front `ebbe36b` | 2 |
+| ✅ | 2.4 Login en el frontend | [2.4-login-frontend.md](2.4-login-frontend.md) — commit front (pendiente al cierre del UAT) | 2 |
 | ⬜ | 3.1 Validación de tallas | [3.1-validacion-tallas.md](3.1-validacion-tallas.md) | 3 — Tests y CI |
 | ⬜ | 3.2 Unit tests de negocio | [3.2-unit-tests.md](3.2-unit-tests.md) | 3 |
 | ⬜ | 3.3 Test e2e del flujo completo | [3.3-e2e-tests.md](3.3-e2e-tests.md) | 3 |
