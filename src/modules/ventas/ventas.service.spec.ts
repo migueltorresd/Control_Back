@@ -58,9 +58,7 @@ describe('VentasService', () => {
         precioUnitario: 95000,
       }),
     );
-    const calls = repository.createAndSave.mock.calls as [
-      [{ fecha: string }],
-    ];
+    const calls = repository.createAndSave.mock.calls as [[{ fecha: string }]];
     expect(calls[0][0].fecha).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     expect(result.id).toBe('VT-0002');
   });
