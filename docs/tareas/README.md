@@ -55,7 +55,7 @@ Una tarea no se marca ✅ por tener un commit con el nombre correcto — se marc
 | ✅ | 3.3 Test e2e del flujo completo | [3.3-e2e-tests.md](3.3-e2e-tests.md) — commit `bbe5f71` | 3 |
 | ✅ | 3.4 CI + Dependabot | [3.4-ci.md](3.4-ci.md) — commit `28ebad6` | 3 |
 | ✅ | 4.1 Logging estructurado | [4.1-logging.md](4.1-logging.md) — commit `706f647` | 4 — Operabilidad |
-| ⬜ | 4.2 Auditoría mínima | [4.2-auditoria.md](4.2-auditoria.md) | 4 |
+| ✅ | 4.2 Auditoría mínima | [4.2-auditoria.md](4.2-auditoria.md) — commit `4499a6b` | 4 |
 | ⬜ | 4.3 Swagger | [4.3-swagger.md](4.3-swagger.md) | 4 |
 | ⬜ | 4.4 Health check | [4.4-health-check.md](4.4-health-check.md) | 4 |
 | ⬜ | 4.5 Paginación | [4.5-paginacion.md](4.5-paginacion.md) | 4 |
@@ -63,7 +63,7 @@ Una tarea no se marca ✅ por tener un commit con el nombre correcto — se marc
 | ⬜ | 5.1 Mappers y tipado estricto | [5.1-mappers-tipado.md](5.1-mappers-tipado.md) | 5 — Pulido |
 | ⬜ | 5.2 Consistencia de dominio | [5.2-consistencia-dominio.md](5.2-consistencia-dominio.md) | 5 |
 | ⬜ | 5.3 Higiene de frontend y repos | [5.3-higiene.md](5.3-higiene.md) | 5 |
-| ⬜ | 6.1 Imagen del modelo (backend) | [6.1-imagen-referencia.md](6.1-imagen-referencia.md) | 6 — Funcionalidades |
-| ⬜ | 6.2 Revisión de calidad con rechazos (backend) | [6.2-revision-calidad.md](6.2-revision-calidad.md) | 6 — Funcionalidades |
+| ✅ | 6.1 Imagen del modelo (backend) | [6.1-imagen-referencia.md](6.1-imagen-referencia.md) — commit `8f07b53` | 6 — Funcionalidades |
+| ✅ | 6.2 Revisión de calidad con rechazos (backend) | [6.2-revision-calidad.md](6.2-revision-calidad.md) — commit `5ab4910` | 6 — Funcionalidades |
 
 **Hito de entrega al cliente: fin de la fase 4** + la fase 6 (pedida por el cliente: 6.1 imagen del modelo → F6; 6.2 revisión de calidad → F9). La fase 5 puede hacerse post-entrega. La 6.1 puede ejecutarse después de la 2.2; la 6.2 después de la 1.5.
