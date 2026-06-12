@@ -1,4 +1,10 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, Unique } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  Unique,
+} from 'typeorm';
 import { Referencia } from './referencia.entity';
 import { Oficio } from '../../../common/enums/oficio.enum';
 import { decimalTransformer } from '../../../common/transformers/decimal.transformer';
@@ -15,6 +21,10 @@ export class Tarifa {
   @Column({ type: 'varchar' })
   oficio: Oficio;
 
-  @Column('decimal', { precision: 12, scale: 2, transformer: decimalTransformer })
+  @Column('decimal', {
+    precision: 12,
+    scale: 2,
+    transformer: decimalTransformer,
+  })
   valor: number;
 }

@@ -14,6 +14,10 @@ export class RecetaItem {
   @ManyToOne(() => Material, { onDelete: 'RESTRICT' })
   material: Material;
 
-  @Column('decimal', { precision: 10, scale: 3, transformer: decimalTransformer })
+  @Column('decimal', {
+    precision: 10,
+    scale: 3,
+    transformer: decimalTransformer,
+  })
   cantidad: number;
 }

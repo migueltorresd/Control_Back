@@ -5,9 +5,7 @@ import { UpdateOperarioDto } from './dto/update-operario.dto';
 
 @Controller('operarios')
 export class OperariosController {
-  constructor(
-    private readonly operariosService: OperariosService,
-  ) {}
+  constructor(private readonly operariosService: OperariosService) {}
 
   @Get()
   async findAll() {

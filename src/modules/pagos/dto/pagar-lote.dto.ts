@@ -10,7 +10,9 @@ export class PagarLoteItemDto {
   @IsString({ message: 'La etapa debe ser un texto' })
   etapa: string;
 
-  @IsNotEmpty({ message: 'El ID del registro de producción (regId) es requerido' })
+  @IsNotEmpty({
+    message: 'El ID del registro de producción (regId) es requerido',
+  })
   @IsString({ message: 'El ID del registro debe ser un texto' })
   regId: string;
 }

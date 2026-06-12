@@ -49,11 +49,41 @@ export class SeedService implements OnModuleInit {
 
     // 1. Materiales
     const materiales = [
-      { id: 'MT-01', nombre: 'Cuero', proveedor: 'Curtiduría León', unidad: 'pie²', precio: 12000 },
-      { id: 'MT-02', nombre: 'Suela', proveedor: 'Suelas Guanajuato', unidad: 'par', precio: 9000 },
-      { id: 'MT-03', nombre: 'Cordón', proveedor: 'Accesorios Express', unidad: 'unidad', precio: 1500 },
-      { id: 'MT-04', nombre: 'Pegante', proveedor: 'Químicos del Calzado', unidad: 'kg', precio: 28000 },
-      { id: 'MT-05', nombre: 'Forro', proveedor: 'Pieles del Bajío', unidad: 'par', precio: 4500 },
+      {
+        id: 'MT-01',
+        nombre: 'Cuero',
+        proveedor: 'Curtiduría León',
+        unidad: 'pie²',
+        precio: 12000,
+      },
+      {
+        id: 'MT-02',
+        nombre: 'Suela',
+        proveedor: 'Suelas Guanajuato',
+        unidad: 'par',
+        precio: 9000,
+      },
+      {
+        id: 'MT-03',
+        nombre: 'Cordón',
+        proveedor: 'Accesorios Express',
+        unidad: 'unidad',
+        precio: 1500,
+      },
+      {
+        id: 'MT-04',
+        nombre: 'Pegante',
+        proveedor: 'Químicos del Calzado',
+        unidad: 'kg',
+        precio: 28000,
+      },
+      {
+        id: 'MT-05',
+        nombre: 'Forro',
+        proveedor: 'Pieles del Bajío',
+        unidad: 'par',
+        precio: 4500,
+      },
     ];
     await this.materialRepo.save(materiales);
 
@@ -69,13 +99,13 @@ export class SeedService implements OnModuleInit {
           { oficio: Oficio.GUARNECEDOR, valor: 3500 },
           { oficio: Oficio.SOLADOR, valor: 2800 },
           { oficio: Oficio.FINIZAJE, valor: 1800 },
-        ] as any,
+        ],
         receta: [
           { material: { id: 'MT-01' }, cantidad: 1.4 },
           { material: { id: 'MT-02' }, cantidad: 1.0 },
           { material: { id: 'MT-03' }, cantidad: 2.0 },
           { material: { id: 'MT-04' }, cantidad: 0.05 },
-        ] as any,
+        ],
       }),
       this.referenciaRepo.create({
         id: 'REF-002',
@@ -87,13 +117,13 @@ export class SeedService implements OnModuleInit {
           { oficio: Oficio.GUARNECEDOR, valor: 4200 },
           { oficio: Oficio.SOLADOR, valor: 3200 },
           { oficio: Oficio.FINIZAJE, valor: 2100 },
-        ] as any,
+        ],
         receta: [
           { material: { id: 'MT-01' }, cantidad: 1.8 },
           { material: { id: 'MT-02' }, cantidad: 1.0 },
           { material: { id: 'MT-05' }, cantidad: 1.0 },
           { material: { id: 'MT-04' }, cantidad: 0.06 },
-        ] as any,
+        ],
       }),
       this.referenciaRepo.create({
         id: 'REF-003',
@@ -105,24 +135,54 @@ export class SeedService implements OnModuleInit {
           { oficio: Oficio.GUARNECEDOR, valor: 3000 },
           { oficio: Oficio.SOLADOR, valor: 2500 },
           { oficio: Oficio.FINIZAJE, valor: 1500 },
-        ] as any,
+        ],
         receta: [
           { material: { id: 'MT-01' }, cantidad: 1.2 },
           { material: { id: 'MT-02' }, cantidad: 1.0 },
           { material: { id: 'MT-03' }, cantidad: 2.0 },
-        ] as any,
+        ],
       }),
     ];
     await this.referenciaRepo.save(referencias);
 
     // 3. Operarios
     const operarios = [
-      { id: 'OP-01', nombre: 'Pedro Ramírez', oficio: Oficio.CORTADOR, antiguedad: 2019 },
-      { id: 'OP-02', nombre: 'José Martínez', oficio: Oficio.CORTADOR, antiguedad: 2021 },
-      { id: 'OP-03', nombre: 'Luis Gómez', oficio: Oficio.GUARNECEDOR, antiguedad: 2017 },
-      { id: 'OP-04', nombre: 'Carmen Díaz', oficio: Oficio.GUARNECEDOR, antiguedad: 2020 },
-      { id: 'OP-05', nombre: 'Marta Ríos', oficio: Oficio.SOLADOR, antiguedad: 2016 },
-      { id: 'OP-06', nombre: 'Andrea Soto', oficio: Oficio.FINIZAJE, antiguedad: 2022 },
+      {
+        id: 'OP-01',
+        nombre: 'Pedro Ramírez',
+        oficio: Oficio.CORTADOR,
+        antiguedad: 2019,
+      },
+      {
+        id: 'OP-02',
+        nombre: 'José Martínez',
+        oficio: Oficio.CORTADOR,
+        antiguedad: 2021,
+      },
+      {
+        id: 'OP-03',
+        nombre: 'Luis Gómez',
+        oficio: Oficio.GUARNECEDOR,
+        antiguedad: 2017,
+      },
+      {
+        id: 'OP-04',
+        nombre: 'Carmen Díaz',
+        oficio: Oficio.GUARNECEDOR,
+        antiguedad: 2020,
+      },
+      {
+        id: 'OP-05',
+        nombre: 'Marta Ríos',
+        oficio: Oficio.SOLADOR,
+        antiguedad: 2016,
+      },
+      {
+        id: 'OP-06',
+        nombre: 'Andrea Soto',
+        oficio: Oficio.FINIZAJE,
+        antiguedad: 2022,
+      },
     ];
     await this.operarioRepo.save(operarios);
 
@@ -142,7 +202,7 @@ export class SeedService implements OnModuleInit {
           { talla: 41, cantidad: 8 },
           { talla: 42, cantidad: 6 },
           { talla: 43, cantidad: 2 },
-        ] as any
+        ],
       }),
       this.valeRepo.create({
         id: 'V-0002',
@@ -156,31 +216,88 @@ export class SeedService implements OnModuleInit {
           { talla: 40, cantidad: 6 },
           { talla: 41, cantidad: 6 },
           { talla: 42, cantidad: 4 },
-        ] as any
+        ],
       }),
     ];
     await this.valeRepo.save(vales);
 
     // 5. Producción Registros
     const prodRegs = [
-      { valeId: 'V-0001', etapa: Oficio.CORTADOR, operarioId: 'OP-01', pares: 40, estado: EstadoProduccion.PAGADO, montoPagado: 48000 },
-      { valeId: 'V-0001', etapa: Oficio.GUARNECEDOR, operarioId: 'OP-03', pares: 25, estado: EstadoProduccion.APROBADO, montoPagado: 87500 },
-      { valeId: 'V-0001', etapa: Oficio.GUARNECEDOR, operarioId: 'OP-04', pares: 15, estado: EstadoProduccion.REGISTRADO, montoPagado: 0 },
-      { valeId: 'V-0001', etapa: Oficio.SOLADOR, operarioId: 'OP-05', pares: 40, estado: EstadoProduccion.PAGADO, montoPagado: 112000 },
-      { valeId: 'V-0001', etapa: Oficio.FINIZAJE, operarioId: 'OP-06', pares: 35, estado: EstadoProduccion.PAGADO, montoPagado: 63000 },
-      { valeId: 'V-0002', etapa: Oficio.CORTADOR, operarioId: 'OP-02', pares: 20, estado: EstadoProduccion.APROBADO, montoPagado: 30000 },
+      {
+        valeId: 'V-0001',
+        etapa: Oficio.CORTADOR,
+        operarioId: 'OP-01',
+        pares: 40,
+        estado: EstadoProduccion.PAGADO,
+        montoPagado: 48000,
+      },
+      {
+        valeId: 'V-0001',
+        etapa: Oficio.GUARNECEDOR,
+        operarioId: 'OP-03',
+        pares: 25,
+        estado: EstadoProduccion.APROBADO,
+        montoPagado: 87500,
+      },
+      {
+        valeId: 'V-0001',
+        etapa: Oficio.GUARNECEDOR,
+        operarioId: 'OP-04',
+        pares: 15,
+        estado: EstadoProduccion.REGISTRADO,
+        montoPagado: 0,
+      },
+      {
+        valeId: 'V-0001',
+        etapa: Oficio.SOLADOR,
+        operarioId: 'OP-05',
+        pares: 40,
+        estado: EstadoProduccion.PAGADO,
+        montoPagado: 112000,
+      },
+      {
+        valeId: 'V-0001',
+        etapa: Oficio.FINIZAJE,
+        operarioId: 'OP-06',
+        pares: 35,
+        estado: EstadoProduccion.PAGADO,
+        montoPagado: 63000,
+      },
+      {
+        valeId: 'V-0002',
+        etapa: Oficio.CORTADOR,
+        operarioId: 'OP-02',
+        pares: 20,
+        estado: EstadoProduccion.APROBADO,
+        montoPagado: 30000,
+      },
     ];
     await this.produccionRegRepo.save(prodRegs);
 
     // 6. Pagos
     const pagos = [
-      { id: 'PG-seed1', fecha: '2026-06-02', operarioId: 'OP-01', valeId: 'V-0001', etapa: 'Cortador', pares: 40, monto: 48000, refId: 'REF-001' }
+      {
+        id: 'PG-seed1',
+        fecha: '2026-06-02',
+        operarioId: 'OP-01',
+        valeId: 'V-0001',
+        etapa: 'Cortador',
+        pares: 40,
+        monto: 48000,
+        refId: 'REF-001',
+      },
     ];
     await this.pagoRepo.save(pagos);
 
     // 7. Ventas (con el nuevo esquema normalizado)
     const ventas = [
-      { id: 'VT-seed1', fecha: '2026-06-05', valeId: 'V-0001', pares: 10, precioUnitario: 95000 }
+      {
+        id: 'VT-seed1',
+        fecha: '2026-06-05',
+        valeId: 'V-0001',
+        pares: 10,
+        precioUnitario: 95000,
+      },
     ];
     await this.ventaRepo.save(ventas);
 

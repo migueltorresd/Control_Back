@@ -22,6 +22,8 @@ export class CreateValeDto {
   ref: string;
 
   @IsNotEmpty({ message: 'Las tallas son requeridas' })
-  @IsObject({ message: 'Las tallas deben ser un objeto clave-valor (ej. {"38": 5})' })
+  @IsObject({
+    message: 'Las tallas deben ser un objeto clave-valor (ej. {"38": 5})',
+  })
   tallas: Record<string, number>;
 }

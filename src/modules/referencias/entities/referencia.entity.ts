@@ -14,12 +14,22 @@ export class Referencia {
   @Column({ nullable: true })
   linea: string;
 
-  @Column('decimal', { precision: 12, scale: 2, transformer: decimalTransformer })
+  @Column('decimal', {
+    precision: 12,
+    scale: 2,
+    transformer: decimalTransformer,
+  })
   precioVenta: number;
 
-  @OneToMany(() => Tarifa, (tarifa) => tarifa.referencia, { cascade: true, onDelete: 'CASCADE' })
+  @OneToMany(() => Tarifa, (tarifa) => tarifa.referencia, {
+    cascade: true,
+    onDelete: 'CASCADE',
+  })
   tarifas: Tarifa[];
 
-  @OneToMany(() => RecetaItem, (item) => item.referencia, { cascade: true, onDelete: 'CASCADE' })
+  @OneToMany(() => RecetaItem, (item) => item.referencia, {
+    cascade: true,
+    onDelete: 'CASCADE',
+  })
   receta: RecetaItem[];
 }

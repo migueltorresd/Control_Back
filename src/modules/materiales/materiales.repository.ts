@@ -20,12 +20,21 @@ export class MaterialesRepository extends Repository<Material> {
     return this.findOne({ where: {}, order: { id: 'DESC' } });
   }
 
-  async createAndSave(materialData: { id: string; nombre: string; proveedor?: string; unidad: string; precio: number }): Promise<Material> {
+  async createAndSave(materialData: {
+    id: string;
+    nombre: string;
+    proveedor?: string;
+    unidad: string;
+    precio: number;
+  }): Promise<Material> {
     const newMaterial = this.create(materialData);
     return this.save(newMaterial);
   }
 
-  async updateMaterial(id: string, materialData: Partial<Material>): Promise<Material | null> {
+  async updateMaterial(
+    id: string,
+    materialData: Partial<Material>,
+  ): Promise<Material | null> {
     await this.update(id, materialData);
     return this.findById(id);
   }

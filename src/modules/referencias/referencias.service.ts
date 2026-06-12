@@ -59,7 +59,9 @@ export class ReferenciasService {
     await this.findOne(id);
 
     // Si se está actualizando la receta, validar que los nuevos materiales existan
-    let recetaConEntidades: { material: Material; cantidad: number }[] | undefined = undefined;
+    let recetaConEntidades:
+      | { material: Material; cantidad: number }[]
+      | undefined = undefined;
     if (dto.receta) {
       recetaConEntidades = [];
       for (const item of dto.receta) {
@@ -83,7 +85,9 @@ export class ReferenciasService {
     );
 
     if (!updated) {
-      throw new NotFoundException(`Referencia con ID ${id} no se pudo actualizar`);
+      throw new NotFoundException(
+        `Referencia con ID ${id} no se pudo actualizar`,
+      );
     }
     return updated;
   }

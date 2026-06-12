@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Body,
+  Param,
+} from '@nestjs/common';
 import { ValesService } from './vales.service';
 import { ProduccionService } from './produccion.service';
 import { CreateValeDto } from './dto/create-vale.dto';
@@ -15,7 +23,7 @@ export class ValesController {
   @Get()
   async findAll() {
     const vales = await this.valesService.findAll();
-    return vales.map(v => this.mapToFrontend(v));
+    return vales.map((v) => this.mapToFrontend(v));
   }
 
   @Get(':id')
@@ -46,7 +54,10 @@ export class ValesController {
   }
 
   @Post(':id/registro')
-  async addRegistro(@Param('id') valeId: string, @Body() dto: RegisterProduccionDto) {
+  async addRegistro(
+    @Param('id') valeId: string,
+    @Body() dto: RegisterProduccionDto,
+  ) {
     const saved = await this.produccionService.registerProduccion(valeId, dto);
     return {
       id: saved.id,

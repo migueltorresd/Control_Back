@@ -20,6 +20,10 @@ export class Venta {
   @Column('int')
   pares: number;
 
-  @Column('decimal', { precision: 12, scale: 2, transformer: decimalTransformer })
+  @Column('decimal', {
+    precision: 12,
+    scale: 2,
+    transformer: decimalTransformer,
+  })
   precioUnitario: number;
 }

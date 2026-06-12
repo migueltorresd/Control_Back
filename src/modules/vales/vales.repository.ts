@@ -11,7 +11,11 @@ export class ValesRepository extends Repository<Vale> {
 
   async findAllWithRelations(): Promise<Vale[]> {
     return this.find({
-      relations: { referencia: true, tallas: true, produccion: { operario: true } },
+      relations: {
+        referencia: true,
+        tallas: true,
+        produccion: { operario: true },
+      },
       order: { id: 'ASC' },
     });
   }
@@ -19,7 +23,11 @@ export class ValesRepository extends Repository<Vale> {
   async findByIdWithRelations(id: string): Promise<Vale | null> {
     return this.findOne({
       where: { id },
-      relations: { referencia: true, tallas: true, produccion: { operario: true } },
+      relations: {
+        referencia: true,
+        tallas: true,
+        produccion: { operario: true },
+      },
     });
   }
 
@@ -28,8 +36,15 @@ export class ValesRepository extends Repository<Vale> {
   }
 
   async crearConRelaciones(
-    valeData: { id: string; fecha: string; almacen: string; color: string; altura: string; referenciaId: string },
-    tallasData: { talla: number; cantidad: number }[]
+    valeData: {
+      id: string;
+      fecha: string;
+      almacen: string;
+      color: string;
+      altura: string;
+      referenciaId: string;
+    },
+    tallasData: { talla: number; cantidad: number }[],
   ): Promise<Vale> {
     return this.dataSource.transaction(async (manager) => {
       // 1. Guardar el Vale
@@ -38,17 +53,23 @@ export class ValesRepository extends Repository<Vale> {
 
       // 2. Guardar las Tallas del vale
       if (tallasData && tallasData.length > 0) {
-        const tallas = tallasData.map(t => manager.create(ValeTalla, {
-          ...t,
-          vale: savedVale,
-        }));
+        const tallas = tallasData.map((t) =>
+          manager.create(ValeTalla, {
+            ...t,
+            vale: savedVale,
+          }),
+        );
         await manager.save(ValeTalla, tallas);
       }
 
       // Retornar el vale creado con sus relaciones completas
       const result = await manager.findOne(Vale, {
         where: { id: savedVale.id },
-        relations: { referencia: true, tallas: true, produccion: { operario: true } },
+        relations: {
+          referencia: true,
+          tallas: true,
+          produccion: { operario: true },
+        },
       });
       return result!;
     });

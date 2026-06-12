@@ -26,14 +26,24 @@ export class PagosRepository extends Repository<Pago> {
   async findById(id: string): Promise<Pago | null> {
     return this.findOne({
       where: { id },
-      relations: { operario: true, vale: true, referencia: true, produccionReg: true },
+      relations: {
+        operario: true,
+        vale: true,
+        referencia: true,
+        produccionReg: true,
+      },
     });
   }
 
   async findByProduccionReg(produccionRegId: string): Promise<Pago | null> {
     return this.findOne({
       where: { produccionRegId },
-      relations: { operario: true, vale: true, referencia: true, produccionReg: true },
+      relations: {
+        operario: true,
+        vale: true,
+        referencia: true,
+        produccionReg: true,
+      },
     });
   }
 
@@ -50,7 +60,7 @@ export class PagosRepository extends Repository<Pago> {
       refId: string;
       produccionRegId: string;
     },
-    updateProduccionFn: (manager: EntityManager) => Promise<void>
+    updateProduccionFn: (manager: EntityManager) => Promise<void>,
   ): Promise<Pago> {
     return this.dataSource.transaction(async (manager) => {
       // 1. Ejecutar la callback que actualiza el estado de producción usando el manager
@@ -75,14 +85,14 @@ export class PagosRepository extends Repository<Pago> {
       refId: string;
       produccionRegId: string;
     }[],
-    updateProduccionFn: (manager: EntityManager) => Promise<void>
+    updateProduccionFn: (manager: EntityManager) => Promise<void>,
   ): Promise<Pago[]> {
     return this.dataSource.transaction(async (manager) => {
       // 1. Ejecutar la callback que actualiza todos los registros de producción en lote
       await updateProduccionFn(manager);
 
       // 2. Guardar los pagos
-      const pagos = pagosData.map(p => manager.create(Pago, p));
+      const pagos = pagosData.map((p) => manager.create(Pago, p));
       return manager.save(Pago, pagos);
     });
   }
@@ -90,7 +100,7 @@ export class PagosRepository extends Repository<Pago> {
   // Transacción para anular un pago
   async anularPagoTransaccional(
     pagoId: string,
-    updateProduccionFn: (manager: EntityManager) => Promise<void>
+    updateProduccionFn: (manager: EntityManager) => Promise<void>,
   ): Promise<void> {
     await this.dataSource.transaction(async (manager) => {
       // 1. Ejecutar la callback que revierte el estado de producción

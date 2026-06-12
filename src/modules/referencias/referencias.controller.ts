@@ -5,9 +5,7 @@ import { UpdateReferenciaDto } from './dto/update-referencia.dto';
 
 @Controller('referencias')
 export class ReferenciasController {
-  constructor(
-    private readonly referenciasService: ReferenciasService,
-  ) {}
+  constructor(private readonly referenciasService: ReferenciasService) {}
 
   @Get()
   async findAll() {

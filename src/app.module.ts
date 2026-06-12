@@ -40,10 +40,19 @@ import { SeedService } from './services/seed.service';
         password: config.get<string>('DATABASE_PASSWORD'),
         database: config.get<string>('DATABASE_DATABASE'),
         autoLoadEntities: true,
-        synchronize: true, // Se elimina en tarea 1.2 al implementar migraciones
+        synchronize: false, // NUNCA true — el esquema evoluciona solo por migraciones
+        migrationsRun: false, // Las migraciones se corren manualmente: pnpm migration:run
       }),
     }),
-    TypeOrmModule.forFeature([Material, Referencia, Operario, Vale, ProduccionReg, Venta, Pago]),
+    TypeOrmModule.forFeature([
+      Material,
+      Referencia,
+      Operario,
+      Vale,
+      ProduccionReg,
+      Venta,
+      Pago,
+    ]),
     MaterialesModule,
     ReferenciasModule,
     OperariosModule,

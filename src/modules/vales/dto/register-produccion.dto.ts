@@ -1,9 +1,18 @@
-import { IsNotEmpty, IsString, IsEnum, IsInt, IsPositive } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsString,
+  IsEnum,
+  IsInt,
+  IsPositive,
+} from 'class-validator';
 import { Oficio } from '../../../common/enums/oficio.enum';
 
 export class RegisterProduccionDto {
   @IsNotEmpty({ message: 'La etapa (oficio) es requerida' })
-  @IsEnum(Oficio, { message: 'La etapa debe ser un oficio válido (Cortador, Guarnecedor, Solador, Finizaje)' })
+  @IsEnum(Oficio, {
+    message:
+      'La etapa debe ser un oficio válido (Cortador, Guarnecedor, Solador, Finizaje)',
+  })
   etapa: Oficio;
 
   @IsNotEmpty({ message: 'El ID del operario es requerido' })

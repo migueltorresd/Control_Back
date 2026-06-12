@@ -1,4 +1,11 @@
-import { IsString, IsInt, Min, IsNumber, IsOptional, IsDateString } from 'class-validator';
+import {
+  IsString,
+  IsInt,
+  Min,
+  IsNumber,
+  IsOptional,
+  IsDateString,
+} from 'class-validator';
 
 export class UpdateVentaDto {
   @IsOptional()
@@ -16,6 +23,9 @@ export class UpdateVentaDto {
   precioUnitario?: number;
 
   @IsOptional()
-  @IsDateString({}, { message: 'La fecha debe tener un formato de fecha válido (YYYY-MM-DD)' })
+  @IsDateString(
+    {},
+    { message: 'La fecha debe tener un formato de fecha válido (YYYY-MM-DD)' },
+  )
   fecha?: string;
 }

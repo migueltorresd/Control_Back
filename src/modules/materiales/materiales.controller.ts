@@ -1,13 +1,18 @@
-import { Controller, Get, Post, Body, Param, NotFoundException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  NotFoundException,
+} from '@nestjs/common';
 import { MaterialesService } from './materiales.service';
 import { CreateMaterialDto } from './dto/create-material.dto';
 import { UpdateMaterialDto } from './dto/update-material.dto';
 
 @Controller('materiales')
 export class MaterialesController {
-  constructor(
-    private readonly materialesService: MaterialesService,
-  ) {}
+  constructor(private readonly materialesService: MaterialesService) {}
 
   @Get()
   async findAll() {

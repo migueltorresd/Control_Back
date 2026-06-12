@@ -1,4 +1,11 @@
-import { IsNotEmpty, IsString, IsEnum, IsInt, Min, IsOptional } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsString,
+  IsEnum,
+  IsInt,
+  Min,
+  IsOptional,
+} from 'class-validator';
 import { Oficio } from '../../../common/enums/oficio.enum';
 
 export class CreateOperarioDto {
@@ -11,7 +18,10 @@ export class CreateOperarioDto {
   nombre: string;
 
   @IsNotEmpty({ message: 'El oficio es requerido' })
-  @IsEnum(Oficio, { message: 'El oficio debe ser un valor válido (Cortador, Guarnecedor, Solador, Finizaje)' })
+  @IsEnum(Oficio, {
+    message:
+      'El oficio debe ser un valor válido (Cortador, Guarnecedor, Solador, Finizaje)',
+  })
   oficio: Oficio;
 
   @IsOptional()

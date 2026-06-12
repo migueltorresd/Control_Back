@@ -16,7 +16,10 @@ export class ProduccionRepository extends Repository<ProduccionReg> {
     });
   }
 
-  async findByValeAndEtapa(valeId: string, etapa: Oficio): Promise<ProduccionReg[]> {
+  async findByValeAndEtapa(
+    valeId: string,
+    etapa: Oficio,
+  ): Promise<ProduccionReg[]> {
     return this.find({
       where: { valeId, etapa },
     });
@@ -36,7 +39,12 @@ export class ProduccionRepository extends Repository<ProduccionReg> {
     return this.save(newReg);
   }
 
-  async updateEstadoAndMonto(id: string, estado: any, montoPagado: number, manager?: EntityManager): Promise<ProduccionReg | null> {
+  async updateEstadoAndMonto(
+    id: string,
+    estado: any,
+    montoPagado: number,
+    manager?: EntityManager,
+  ): Promise<ProduccionReg | null> {
     const repo = manager ? manager.getRepository(ProduccionReg) : this;
     await repo.update(id, { estado, montoPagado });
     return this.findById(id);

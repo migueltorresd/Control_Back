@@ -1,4 +1,8 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PagosRepository } from './pagos.repository';
 import { ProduccionService } from '../vales/produccion.service';
 import { Pago } from './entities/pago.entity';
@@ -24,7 +28,7 @@ export class PagosService {
     const reg = await this.produccionService.findOne(regId);
     if (reg.estado !== EstadoProduccion.APROBADO) {
       throw new BadRequestException(
-        `El registro de producción ${regId} no está en estado aprobado. Estado actual: ${reg.estado}`
+        `El registro de producción ${regId} no está en estado aprobado. Estado actual: ${reg.estado}`,
       );
     }
 
@@ -44,13 +48,23 @@ export class PagosService {
     };
 
     // 2. Ejecutar de forma transaccional la actualización de estado y la creación de comprobante
-    return this.repository.registrarPagoTransaccional(pagoData, async (manager) => {
-      await this.produccionService.updateEstado(reg.valeId, reg.id, EstadoProduccion.PAGADO, manager);
-    });
+    return this.repository.registrarPagoTransaccional(
+      pagoData,
+      async (manager) => {
+        await this.produccionService.updateEstado(
+          reg.valeId,
+          reg.id,
+          EstadoProduccion.PAGADO,
+          manager,
+        );
+      },
+    );
   }
 
   // Pagar lote de registros
-  async pagarLote(items: { vale: string; etapa: string; regId: string }[]): Promise<Pago[]> {
+  async pagarLote(
+    items: { vale: string; etapa: string; regId: string }[],
+  ): Promise<Pago[]> {
     const validados: any[] = [];
 
     // 1. Validar que todos los registros de producción existan y estén aprobados
@@ -58,12 +72,12 @@ export class PagosService {
       const reg = await this.produccionService.findOne(item.regId);
       if (reg.valeId !== item.vale || reg.etapa !== item.etapa) {
         throw new BadRequestException(
-          `Inconsistencia: El registro ${item.regId} no coincide con el vale ${item.vale} o la etapa ${item.etapa}`
+          `Inconsistencia: El registro ${item.regId} no coincide con el vale ${item.vale} o la etapa ${item.etapa}`,
         );
       }
       if (reg.estado !== EstadoProduccion.APROBADO) {
         throw new BadRequestException(
-          `El registro ${item.regId} no está aprobado para pago. Estado: ${reg.estado}`
+          `El registro ${item.regId} no está aprobado para pago. Estado: ${reg.estado}`,
         );
       }
       validados.push(reg);
@@ -86,11 +100,19 @@ export class PagosService {
     }));
 
     // 3. Ejecutar la transacción en lote
-    return this.repository.registrarPagosEnLoteTransaccional(pagosData, async (manager) => {
-      for (const reg of validados) {
-        await this.produccionService.updateEstado(reg.valeId, reg.id, EstadoProduccion.PAGADO, manager);
-      }
-    });
+    return this.repository.registrarPagosEnLoteTransaccional(
+      pagosData,
+      async (manager) => {
+        for (const reg of validados) {
+          await this.produccionService.updateEstado(
+            reg.valeId,
+            reg.id,
+            EstadoProduccion.PAGADO,
+            manager,
+          );
+        }
+      },
+    );
   }
 
   // Anular un pago (por el ID del registro de producción)
@@ -98,13 +120,20 @@ export class PagosService {
     // 1. Buscar el comprobante de pago asociado a la producción
     const pago = await this.repository.findByProduccionReg(regId);
     if (!pago) {
-      throw new NotFoundException(`No existe un comprobante de pago para el registro de producción ${regId}`);
+      throw new NotFoundException(
+        `No existe un comprobante de pago para el registro de producción ${regId}`,
+      );
     }
 
     // 2. Anular transaccionalmente
     await this.repository.anularPagoTransaccional(pago.id, async (manager) => {
       // Revertir el estado de la producción a aprobado (el monto congelado permanece)
-      await this.produccionService.updateEstado(pago.valeId, pago.produccionRegId, EstadoProduccion.APROBADO, manager);
+      await this.produccionService.updateEstado(
+        pago.valeId,
+        pago.produccionRegId,
+        EstadoProduccion.APROBADO,
+        manager,
+      );
     });
   }
 }

@@ -33,7 +33,11 @@ export class Pago {
   @Column('int')
   pares: number;
 
-  @Column('decimal', { precision: 12, scale: 2, transformer: decimalTransformer })
+  @Column('decimal', {
+    precision: 12,
+    scale: 2,
+    transformer: decimalTransformer,
+  })
   monto: number;
 
   @Column()

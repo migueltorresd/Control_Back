@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Body,
+  Param,
+} from '@nestjs/common';
 import { VentasService } from './ventas.service';
 import { CreateVentaDto } from './dto/create-venta.dto';
 import { UpdateVentaDto } from './dto/update-venta.dto';
@@ -6,14 +14,12 @@ import { Venta } from './entities/venta.entity';
 
 @Controller('ventas')
 export class VentasController {
-  constructor(
-    private readonly ventasService: VentasService,
-  ) {}
+  constructor(private readonly ventasService: VentasService) {}
 
   @Get()
   async findAll() {
     const ventas = await this.ventasService.findAll();
-    return ventas.map(v => this.mapToFrontend(v));
+    return ventas.map((v) => this.mapToFrontend(v));
   }
 
   @Get(':id')

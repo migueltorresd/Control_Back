@@ -70,7 +70,8 @@ export class VentasService {
     // 3. Actualizar campos
     if (dto.valeId !== undefined) venta.valeId = dto.valeId;
     if (dto.pares !== undefined) venta.pares = dto.pares;
-    if (dto.precioUnitario !== undefined) venta.precioUnitario = dto.precioUnitario;
+    if (dto.precioUnitario !== undefined)
+      venta.precioUnitario = dto.precioUnitario;
     if (dto.fecha !== undefined) venta.fecha = dto.fecha;
 
     await this.repository.save(venta);

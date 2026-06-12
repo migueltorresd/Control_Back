@@ -4,15 +4,13 @@ import { PagarLoteDto } from './dto/pagar-lote.dto';
 
 @Controller('pagos')
 export class PagosController {
-  constructor(
-    private readonly pagosService: PagosService,
-  ) {}
+  constructor(private readonly pagosService: PagosService) {}
 
   @Get()
   async findAll(@Query('operarioId') operarioId?: string) {
     const pagos = await this.pagosService.findAll(operarioId);
     // Retornamos mapeado con la estructura que el frontend espera
-    return pagos.map(p => ({
+    return pagos.map((p) => ({
       id: p.id,
       fecha: p.fecha,
       operarioId: p.operarioId,
@@ -44,7 +42,7 @@ export class PagosController {
         pares: pago.pares,
         monto: pago.monto,
         ref: pago.refId,
-      }
+      },
     };
   }
 

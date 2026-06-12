@@ -1,4 +1,12 @@
-import { IsNotEmpty, IsString, IsInt, Min, IsNumber, IsOptional, IsDateString } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsString,
+  IsInt,
+  Min,
+  IsNumber,
+  IsOptional,
+  IsDateString,
+} from 'class-validator';
 
 export class CreateVentaDto {
   @IsNotEmpty({ message: 'El ID del vale es requerido' })
@@ -16,6 +24,9 @@ export class CreateVentaDto {
   precioUnitario: number;
 
   @IsOptional()
-  @IsDateString({}, { message: 'La fecha debe tener un formato de fecha válido (YYYY-MM-DD)' })
+  @IsDateString(
+    {},
+    { message: 'La fecha debe tener un formato de fecha válido (YYYY-MM-DD)' },
+  )
   fecha?: string;
 }

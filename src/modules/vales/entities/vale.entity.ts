@@ -1,4 +1,11 @@
-import { Entity, Column, PrimaryColumn, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryColumn,
+  ManyToOne,
+  JoinColumn,
+  OneToMany,
+} from 'typeorm';
 import { Referencia } from '../../referencias/entities/referencia.entity';
 import { ValeTalla } from './vale-talla.entity';
 import { ProduccionReg } from './produccion-reg.entity';
@@ -28,9 +35,15 @@ export class Vale {
   @JoinColumn({ name: 'referenciaId' })
   referencia: Referencia;
 
-  @OneToMany(() => ValeTalla, (vt) => vt.vale, { cascade: true, onDelete: 'CASCADE' })
+  @OneToMany(() => ValeTalla, (vt) => vt.vale, {
+    cascade: true,
+    onDelete: 'CASCADE',
+  })
   tallas: ValeTalla[];
 
-  @OneToMany(() => ProduccionReg, (pr) => pr.vale, { cascade: true, onDelete: 'CASCADE' })
+  @OneToMany(() => ProduccionReg, (pr) => pr.vale, {
+    cascade: true,
+    onDelete: 'CASCADE',
+  })
   produccion: ProduccionReg[];
 }

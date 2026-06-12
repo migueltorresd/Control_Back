@@ -20,12 +20,20 @@ export class OperariosRepository extends Repository<Operario> {
     return this.findOne({ where: {}, order: { id: 'DESC' } });
   }
 
-  async createAndSave(operarioData: { id: string; nombre: string; oficio: any; antiguedad?: number }): Promise<Operario> {
+  async createAndSave(operarioData: {
+    id: string;
+    nombre: string;
+    oficio: any;
+    antiguedad?: number;
+  }): Promise<Operario> {
     const newOperario = this.create(operarioData);
     return this.save(newOperario);
   }
 
-  async updateOperario(id: string, operarioData: Partial<Operario>): Promise<Operario | null> {
+  async updateOperario(
+    id: string,
+    operarioData: Partial<Operario>,
+  ): Promise<Operario | null> {
     await this.update(id, operarioData);
     return this.findById(id);
   }

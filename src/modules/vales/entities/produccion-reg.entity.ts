@@ -1,4 +1,10 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
 import { Vale } from './vale.entity';
 import { Operario } from '../../operarios/entities/operario.entity';
 import { Oficio } from '../../../common/enums/oficio.enum';

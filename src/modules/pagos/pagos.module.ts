@@ -7,18 +7,9 @@ import { PagosRepository } from './pagos.repository';
 import { ValesModule } from '../vales/vales.module';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([Pago]),
-    ValesModule,
-  ],
+  imports: [TypeOrmModule.forFeature([Pago]), ValesModule],
   controllers: [PagosController],
-  providers: [
-    PagosService,
-    PagosRepository,
-  ],
-  exports: [
-    PagosService,
-    PagosRepository,
-  ],
+  providers: [PagosService, PagosRepository],
+  exports: [PagosService, PagosRepository],
 })
 export class PagosModule {}

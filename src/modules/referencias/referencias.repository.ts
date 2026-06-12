@@ -31,9 +31,14 @@ export class ReferenciasRepository extends Repository<Referencia> {
   }
 
   async crearConRelaciones(
-    refData: { id: string; nombre: string; linea?: string; precioVenta: number },
+    refData: {
+      id: string;
+      nombre: string;
+      linea?: string;
+      precioVenta: number;
+    },
     tarifasData: { oficio: Oficio; valor: number }[],
-    recetaItemsData: { material: Material; cantidad: number }[]
+    recetaItemsData: { material: Material; cantidad: number }[],
   ): Promise<Referencia> {
     return this.dataSource.transaction(async (manager) => {
       // 1. Guardar Referencia
@@ -42,26 +47,30 @@ export class ReferenciasRepository extends Repository<Referencia> {
 
       // 2. Guardar Tarifas
       if (tarifasData && tarifasData.length > 0) {
-        const tarifas = tarifasData.map(t => manager.create(Tarifa, {
-          ...t,
-          referencia: savedRef
-        }));
+        const tarifas = tarifasData.map((t) =>
+          manager.create(Tarifa, {
+            ...t,
+            referencia: savedRef,
+          }),
+        );
         await manager.save(Tarifa, tarifas);
       }
 
       // 3. Guardar RecetaItems
       if (recetaItemsData && recetaItemsData.length > 0) {
-        const recetaItems = recetaItemsData.map(r => manager.create(RecetaItem, {
-          ...r,
-          referencia: savedRef
-        }));
+        const recetaItems = recetaItemsData.map((r) =>
+          manager.create(RecetaItem, {
+            ...r,
+            referencia: savedRef,
+          }),
+        );
         await manager.save(RecetaItem, recetaItems);
       }
 
       // Retornar la referencia creada con sus relaciones
       const result = await manager.findOne(Referencia, {
         where: { id: savedRef.id },
-        relations: { tarifas: true, receta: { material: true } }
+        relations: { tarifas: true, receta: { material: true } },
       });
       return result!;
     });
@@ -71,7 +80,7 @@ export class ReferenciasRepository extends Repository<Referencia> {
     id: string,
     refData: { nombre?: string; linea?: string; precioVenta?: number },
     tarifasData?: { oficio: Oficio; valor: number }[],
-    recetaItemsData?: { material: Material; cantidad: number }[]
+    recetaItemsData?: { material: Material; cantidad: number }[],
   ): Promise<Referencia | null> {
     return this.dataSource.transaction(async (manager) => {
       // 1. Actualizar datos base de la referencia
@@ -82,10 +91,12 @@ export class ReferenciasRepository extends Repository<Referencia> {
         await manager.delete(Tarifa, { referencia: { id } });
         const reference = await manager.findOneBy(Referencia, { id });
         if (reference) {
-          const tarifas = tarifasData.map(t => manager.create(Tarifa, {
-            ...t,
-            referencia: reference
-          }));
+          const tarifas = tarifasData.map((t) =>
+            manager.create(Tarifa, {
+              ...t,
+              referencia: reference,
+            }),
+          );
           await manager.save(Tarifa, tarifas);
         }
       }
@@ -95,17 +106,19 @@ export class ReferenciasRepository extends Repository<Referencia> {
         await manager.delete(RecetaItem, { referencia: { id } });
         const reference = await manager.findOneBy(Referencia, { id });
         if (reference) {
-          const recetaItems = recetaItemsData.map(r => manager.create(RecetaItem, {
-            ...r,
-            referencia: reference
-          }));
+          const recetaItems = recetaItemsData.map((r) =>
+            manager.create(RecetaItem, {
+              ...r,
+              referencia: reference,
+            }),
+          );
           await manager.save(RecetaItem, recetaItems);
         }
       }
 
       return manager.findOne(Referencia, {
         where: { id },
-        relations: { tarifas: true, receta: { material: true } }
+        relations: { tarifas: true, receta: { material: true } },
       });
     });
   }
