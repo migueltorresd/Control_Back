@@ -51,16 +51,16 @@ export class ValesRepository extends Repository<Vale> {
       // 1. Obtener el siguiente ID de la secuencia (dentro de la transacción)
       const id = await this.nextId(manager);
 
-      // 2. Guardar el Vale
-      const newVale = manager.create(Vale, { ...valeData, id });
-      const savedVale = await manager.save(Vale, newVale);
+      // 2. Insertar el Vale (insert, no save: ante una colisión de ID debe
+      // fallar ruidosamente, nunca sobrescribir un vale existente)
+      await manager.insert(Vale, { ...valeData, id });
 
-      // 2. Guardar las Tallas del vale
+      // 3. Insertar las Tallas del vale
       if (tallasData && tallasData.length > 0) {
         const tallas = tallasData.map((t) =>
           manager.create(ValeTalla, {
             ...t,
-            vale: savedVale,
+            vale: { id } as Vale,
           }),
         );
         await manager.save(ValeTalla, tallas);
@@ -68,7 +68,7 @@ export class ValesRepository extends Repository<Vale> {
 
       // Retornar el vale creado con sus relaciones completas
       const result = await manager.findOne(Vale, {
-        where: { id: savedVale.id },
+        where: { id },
         relations: {
           referencia: true,
           tallas: true,

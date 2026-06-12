@@ -82,9 +82,9 @@ export class PagosService {
         manager,
       );
 
-      // 6. Guardar el pago
-      const newPago = manager.create(Pago, pagoData);
-      return manager.save(Pago, newPago);
+      // 6. Insertar el pago (insert, no save: nunca sobrescribir)
+      await manager.insert(Pago, pagoData);
+      return manager.findOneByOrFail(Pago, { id: pagoId });
     });
   }
 
@@ -156,13 +156,12 @@ export class PagosService {
           manager,
         );
 
-        // 6. Crear el pago
-        const pago = manager.create(Pago, pagoData);
-        pagos.push(pago);
+        // 6. Insertar el pago (insert, no save: nunca sobrescribir)
+        await manager.insert(Pago, pagoData);
+        pagos.push(await manager.findOneByOrFail(Pago, { id: pagoId }));
       }
 
-      // 7. Guardar todos los pagos en lote
-      return manager.save(Pago, pagos);
+      return pagos;
     });
   }
 

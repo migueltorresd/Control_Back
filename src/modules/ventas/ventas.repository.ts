@@ -39,8 +39,9 @@ export class VentasRepository extends Repository<Venta> {
   async createAndSave(ventaData: Omit<Partial<Venta>, 'id'>): Promise<Venta> {
     return this.dataSource.transaction(async (manager) => {
       const id = await this.nextId(manager);
-      const newVenta = manager.create(Venta, { ...ventaData, id });
-      return manager.save(Venta, newVenta);
+      // insert, no save: ante colisión de ID debe fallar, nunca sobrescribir
+      await manager.insert(Venta, { ...ventaData, id });
+      return manager.findOneByOrFail(Venta, { id });
     });
   }
 }

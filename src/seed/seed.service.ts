@@ -177,6 +177,30 @@ export class SeedService {
     ];
     await this.ventaRepo.save(ventas);
 
+    // 8. Sincronizar las secuencias de IDs con los datos sembrados.
+    // El seed inserta IDs literales (V-0001, V-0002...) sin consumir las
+    // secuencias; sin esto, el siguiente nextval colisionaría con el seed.
+    await this.sincronizarSecuencias();
+
     console.log('Seed completado exitosamente.');
+  }
+
+  private async sincronizarSecuencias(): Promise<void> {
+    const manager = this.materialRepo.manager;
+    await manager.query(`
+      SELECT setval('vales_seq',
+        COALESCE((SELECT MAX(substring(vale FROM 3)::int) FROM vales WHERE vale ~ '^V-[0-9]+$'), 0) + 1,
+        false)
+    `);
+    await manager.query(`
+      SELECT setval('ventas_seq',
+        COALESCE((SELECT MAX(substring(id FROM 4)::int) FROM ventas WHERE id ~ '^VT-[0-9]+$'), 0) + 1,
+        false)
+    `);
+    await manager.query(`
+      SELECT setval('pagos_seq',
+        COALESCE((SELECT MAX(substring(id FROM 4)::int) FROM pagos WHERE id ~ '^PG-[0-9]+$'), 0) + 1,
+        false)
+    `);
   }
 }
