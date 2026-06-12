@@ -9,6 +9,7 @@ import {
 import { Referencia } from '../../referencias/entities/referencia.entity';
 import { ValeTalla } from './vale-talla.entity';
 import { ProduccionReg } from './produccion-reg.entity';
+import { Rechazo } from './rechazo.entity';
 
 @Entity('vales')
 export class Vale {
@@ -46,4 +47,7 @@ export class Vale {
     onDelete: 'CASCADE',
   })
   produccion: ProduccionReg[];
+
+  @OneToMany(() => Rechazo, (r) => r.vale)
+  rechazos: Rechazo[];
 }

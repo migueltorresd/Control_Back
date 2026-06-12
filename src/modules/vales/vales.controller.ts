@@ -6,14 +6,19 @@ import {
   Delete,
   Body,
   Param,
+  Req,
+  BadRequestException,
 } from '@nestjs/common';
+import { Request } from 'express';
 import { ValesService } from './vales.service';
 import { ProduccionService } from './produccion.service';
 import { CreateValeDto } from './dto/create-vale.dto';
 import { RegisterProduccionDto } from './dto/register-produccion.dto';
 import { UpdateProduccionEstadoDto } from './dto/update-produccion-estado.dto';
+import { RevisarProduccionDto } from './dto/revisar-produccion.dto';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Rol } from '../auth/enums/rol.enum';
+import { UsuarioAutenticado } from '../auth/jwt.strategy';
 
 @Controller('vales')
 @Roles(Rol.ADMIN)
@@ -77,8 +82,24 @@ export class ValesController {
     @Param('regId') regId: string,
     @Body() dto: UpdateProduccionEstadoDto,
   ) {
+    if (dto.estado === 'aprobado') {
+      throw new BadRequestException(
+        'Use el endpoint de revisión para aprobar producción',
+      );
+    }
     await this.produccionService.updateEstado(valeId, regId, dto.estado);
     return { success: true };
+  }
+
+  @Post(':id/registro/:regId/revision')
+  async revisarRegistro(
+    @Param('id') valeId: string,
+    @Param('regId') regId: string,
+    @Body() dto: RevisarProduccionDto,
+    @Req() req: Request & { user: UsuarioAutenticado },
+  ) {
+    const username = req.user?.username || null;
+    return this.produccionService.revisar(valeId, regId, dto, username);
   }
 
   @Delete(':id/registro/:regId')
@@ -114,6 +135,28 @@ export class ValesController {
             pares: r.pares,
             estado: r.estado,
             montoPagado: Number(r.montoPagado),
+            revisadoPor: r.revisadoPor,
+            revisadoEn: r.revisadoEn,
+          });
+        }
+      });
+    }
+
+    const rechazos: Record<string, any[]> = {
+      Cortador: [],
+      Guarnecedor: [],
+      Solador: [],
+      Finizaje: [],
+    };
+
+    if (v.rechazos && Array.isArray(v.rechazos)) {
+      v.rechazos.forEach((r: any) => {
+        if (rechazos[r.etapa]) {
+          rechazos[r.etapa].push({
+            pares: r.pares,
+            motivo: r.motivo,
+            fecha: r.fecha,
+            operarioId: r.operarioId,
           });
         }
       });
@@ -128,6 +171,7 @@ export class ValesController {
       altura: v.altura,
       tallas: tallasObj,
       produccion,
+      rechazos,
     };
   }
 }

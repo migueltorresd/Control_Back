@@ -10,7 +10,9 @@ import { ValesService } from './vales.service';
 import { OperariosService } from '../operarios/operarios.service';
 import { ReferenciasService } from '../referencias/referencias.service';
 import { RegisterProduccionDto } from './dto/register-produccion.dto';
+import { RevisarProduccionDto } from './dto/revisar-produccion.dto';
 import { ProduccionReg } from './entities/produccion-reg.entity';
+import { Rechazo } from './entities/rechazo.entity';
 import { EstadoProduccion } from '../../common/enums/estado-produccion.enum';
 
 @Injectable()
@@ -177,5 +179,106 @@ export class ProduccionService {
     }
 
     await this.repository.removeReg(reg, manager);
+  }
+
+  async revisar(
+    valeId: string,
+    regId: string,
+    dto: RevisarProduccionDto,
+    username: string | null,
+  ): Promise<any> {
+    return this.repository.dataSource.transaction(async (manager) => {
+      // 1. Obtener y bloquear el registro con pessimistic_write
+      const reg = await manager.findOne(ProduccionReg, {
+        where: { id: regId },
+        relations: { vale: true },
+        lock: { mode: 'pessimistic_write' },
+      });
+
+      if (!reg) {
+        throw new NotFoundException(
+          `Registro de producción con ID ${regId} no encontrado`,
+        );
+      }
+
+      if (reg.valeId !== valeId) {
+        throw new NotFoundException(
+          `Registro de producción con ID ${regId} no pertenece al vale ${valeId}`,
+        );
+      }
+
+      if (reg.estado !== EstadoProduccion.REGISTRADO) {
+        throw new BadRequestException(
+          `El registro de producción no está en estado REGISTRADO. Estado actual: ${reg.estado}`,
+        );
+      }
+
+      const { paresAprobados, motivo } = dto;
+      if (paresAprobados < 0 || paresAprobados > reg.pares) {
+        throw new BadRequestException(
+          `La cantidad de pares aprobados (${paresAprobados}) debe estar entre 0 y ${reg.pares}`,
+        );
+      }
+
+      const paresRechazados = reg.pares - paresAprobados;
+      if (paresRechazados > 0 && (!motivo || !motivo.trim())) {
+        throw new BadRequestException('Indique el motivo del rechazo');
+      }
+
+      // 2. Si hay rechazados, insertar en rechazos
+      if (paresRechazados > 0) {
+        const d = new Date();
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        const localFecha = `${year}-${month}-${day}`;
+
+        const rechazo = manager.create(Rechazo, {
+          fecha: localFecha,
+          valeId: reg.valeId,
+          etapa: reg.etapa,
+          operarioId: reg.operarioId,
+          pares: paresRechazados,
+          motivo: motivo.trim(),
+          registroId: reg.id,
+        });
+        await manager.save(Rechazo, rechazo);
+      }
+
+      // 3. Si paresAprobados === 0: eliminar registro de producción
+      if (paresAprobados === 0) {
+        await manager.remove(ProduccionReg, reg);
+        return { success: true, deleted: true, paresAprobados: 0, paresRechazados };
+      }
+
+      // 4. Si paresAprobados > 0: calcular tarifa y actualizar
+      const ref = await this.referenciasService.findOne(reg.vale.referenciaId);
+      const tarifaObj = ref.tarifas.find((t) => t.oficio === reg.etapa);
+      if (!tarifaObj) {
+        throw new BadRequestException(
+          `No se puede aprobar la producción porque la referencia ${ref.nombre} no tiene tarifa definida para el oficio ${reg.etapa}`,
+        );
+      }
+
+      const nuevoMonto = paresAprobados * tarifaObj.valor;
+      reg.pares = paresAprobados;
+      reg.estado = EstadoProduccion.APROBADO;
+      reg.montoPagado = nuevoMonto;
+      reg.revisadoPor = username;
+      reg.revisadoEn = new Date();
+
+      await manager.save(ProduccionReg, reg);
+      return { success: true, deleted: false, paresAprobados, paresRechazados };
+    });
+  }
+
+  async findRechazos(valeId?: string, operarioId?: string): Promise<Rechazo[]> {
+    const where: any = {};
+    if (valeId) where.valeId = valeId;
+    if (operarioId) where.operarioId = operarioId;
+    return this.repository.manager.find(Rechazo, {
+      where,
+      order: { creadoEn: 'DESC' },
+    });
   }
 }

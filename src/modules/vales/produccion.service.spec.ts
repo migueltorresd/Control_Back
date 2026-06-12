@@ -16,11 +16,24 @@ import { EntityManager } from 'typeorm';
 describe('ProduccionService', () => {
   let service: ProduccionService;
 
+  const mockManager = {
+    findOne: jest.fn(),
+    save: jest.fn(),
+    remove: jest.fn(),
+    create: jest.fn(),
+  };
+
   const repository = {
     findById: jest.fn(),
     registrarProduccionAtomico: jest.fn(),
     updateEstadoAtomico: jest.fn(),
     removeReg: jest.fn(),
+    dataSource: {
+      transaction: jest.fn((cb) => cb(mockManager)),
+    },
+    manager: {
+      find: jest.fn(),
+    },
   };
   const valesService = { findOne: jest.fn() };
   const operariosService = { findOne: jest.fn() };
@@ -59,6 +72,7 @@ describe('ProduccionService', () => {
 
   beforeEach(async () => {
     jest.resetAllMocks();
+    repository.dataSource.transaction.mockImplementation((cb) => cb(mockManager));
     const module = await Test.createTestingModule({
       providers: [
         ProduccionService,
@@ -358,6 +372,100 @@ describe('ProduccionService', () => {
     it('inexistente → 404', async () => {
       repository.findById.mockResolvedValue(null);
       await expect(service.findOne('nope')).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('revisar', () => {
+    const dtoAprobacionTotal = { paresAprobados: 10 };
+    const dtoAprobacionParcial = { paresAprobados: 7, motivo: 'Costura defectuosa' };
+    const dtoAprobacionParcialSinMotivo = { paresAprobados: 7 };
+    const dtoRechazoTotal = { paresAprobados: 0, motivo: 'Todo mal hecho' };
+
+    it('aprobación total cambia estado a aprobado, congela monto y guarda datos de revisor', async () => {
+      const reg = { ...regBase };
+      mockManager.findOne.mockResolvedValue(reg);
+      referenciasService.findOne.mockResolvedValue(referencia);
+
+      const res = await service.revisar('V-0001', 'reg-1', dtoAprobacionTotal, 'admin-user');
+
+      expect(mockManager.findOne).toHaveBeenCalled();
+      expect(reg.estado).toBe(EstadoProduccion.APROBADO);
+      expect(reg.pares).toBe(10);
+      expect(reg.montoPagado).toBe(12000); // 10 * 1200
+      expect(reg.revisadoPor).toBe('admin-user');
+      expect(reg.revisadoEn).toBeInstanceOf(Date);
+      expect(mockManager.save).toHaveBeenCalledWith(expect.anything(), reg);
+      expect(res.deleted).toBe(false);
+      expect(res.paresAprobados).toBe(10);
+      expect(res.paresRechazados).toBe(0);
+    });
+
+    it('aprobación parcial guarda rechazo y actualiza registro de producción', async () => {
+      const reg = { ...regBase };
+      mockManager.findOne.mockResolvedValue(reg);
+      referenciasService.findOne.mockResolvedValue(referencia);
+      mockManager.create.mockReturnValue({});
+
+      const res = await service.revisar('V-0001', 'reg-1', dtoAprobacionParcial, 'admin-user');
+
+      expect(mockManager.create).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({
+        valeId: 'V-0001',
+        etapa: Oficio.CORTADOR,
+        operarioId: 'OP-01',
+        pares: 3,
+        motivo: 'Costura defectuosa',
+      }));
+      expect(mockManager.save).toHaveBeenCalled();
+      expect(reg.pares).toBe(7);
+      expect(reg.estado).toBe(EstadoProduccion.APROBADO);
+      expect(reg.montoPagado).toBe(8400); // 7 * 1200
+      expect(res.deleted).toBe(false);
+      expect(res.paresAprobados).toBe(7);
+      expect(res.paresRechazados).toBe(3);
+    });
+
+    it('aprobación parcial sin motivo → 400', async () => {
+      const reg = { ...regBase };
+      mockManager.findOne.mockResolvedValue(reg);
+
+      await expect(
+        service.revisar('V-0001', 'reg-1', dtoAprobacionParcialSinMotivo, 'admin-user'),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('rechazo total archiva rechazo y elimina el registro de producción', async () => {
+      const reg = { ...regBase };
+      mockManager.findOne.mockResolvedValue(reg);
+      mockManager.create.mockReturnValue({});
+
+      const res = await service.revisar('V-0001', 'reg-1', dtoRechazoTotal, 'admin-user');
+
+      expect(mockManager.create).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({
+        pares: 10,
+        motivo: 'Todo mal hecho',
+      }));
+      expect(mockManager.remove).toHaveBeenCalledWith(expect.anything(), reg);
+      expect(res.deleted).toBe(true);
+      expect(res.paresAprobados).toBe(0);
+      expect(res.paresRechazados).toBe(10);
+    });
+
+    it('estado del registro diferente a REGISTRADO → 400', async () => {
+      const reg = { ...regBase, estado: EstadoProduccion.APROBADO };
+      mockManager.findOne.mockResolvedValue(reg);
+
+      await expect(
+        service.revisar('V-0001', 'reg-1', dtoAprobacionTotal, 'admin-user'),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('cantidad de pares aprobados mayor que el registro → 400', async () => {
+      const reg = { ...regBase };
+      mockManager.findOne.mockResolvedValue(reg);
+
+      await expect(
+        service.revisar('V-0001', 'reg-1', { paresAprobados: 15 }, 'admin-user'),
+      ).rejects.toThrow(BadRequestException);
     });
   });
 });

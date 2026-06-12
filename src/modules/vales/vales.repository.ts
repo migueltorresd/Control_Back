@@ -15,6 +15,7 @@ export class ValesRepository extends Repository<Vale> {
         referencia: true,
         tallas: true,
         produccion: { operario: true },
+        rechazos: true,
       },
       order: { id: 'ASC' },
     });
@@ -27,6 +28,7 @@ export class ValesRepository extends Repository<Vale> {
         referencia: true,
         tallas: true,
         produccion: { operario: true },
+        rechazos: true,
       },
     });
   }
@@ -73,6 +75,7 @@ export class ValesRepository extends Repository<Vale> {
           referencia: true,
           tallas: true,
           produccion: { operario: true },
+          rechazos: true,
         },
       });
       return result!;

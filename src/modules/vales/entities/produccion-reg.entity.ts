@@ -49,4 +49,10 @@ export class ProduccionReg {
     transformer: decimalTransformer,
   })
   montoPagado: number;
+
+  @Column({ type: 'varchar', nullable: true })
+  revisadoPor: string | null;
+
+  @Column({ type: 'timestamp', nullable: true })
+  revisadoEn: Date | null;
 }
