@@ -16,7 +16,7 @@ Al terminar cada tarea: verifica el criterio de aceptación, marca el checkbox a
 1. **Una tarea por vez, en orden.** Commit por tarea con formato `feat(scope): ...` / `fix(scope): ...` / `test(scope): ...`.
 2. **Convenciones del proyecto**: comunicación entre módulos solo service→service (nunca el repository de otro módulo); queries solo en repositories; todo input HTTP entra por DTO con `class-validator`; mensajes de error y validación **en español**, como los existentes.
 3. **No romper el contrato del frontend** (`e:\proyectos\control-produccion\src\services\api.js` define rutas y shapes). Si la tarea cambia rutas o shapes, la misma tarea actualiza el frontend.
-4. **Definition of Done**: `pnpm build`, `pnpm lint` y `pnpm test` pasan; el criterio de aceptación se verificó; checkbox marcado.
+4. **Definition of Done**: `pnpm build` y `pnpm test` pasan; `pnpm lint` **no introduce errores nuevos** respecto a la línea base (existen 67 errores preexistentes por los `any` del código original — auditados el 2026-06-11 — que se eliminan en la tarea 5.1; desde la 5.1 en adelante, lint debe quedar en cero); el criterio de aceptación se verificó; checkbox marcado.
 5. **Nunca**: reintroducir `synchronize: true`; exponer entidades TypeORM en respuestas HTTP nuevas; secretos en el repo; `any` en código nuevo; SQL crudo con interpolación de strings (siempre parámetros); `dangerouslySetInnerHTML` en el frontend.
 6. **Entorno local**: PostgreSQL con `docker compose up -d` (raíz del backend); backend `pnpm start:dev` (puerto 3001); frontend `pnpm dev` (puerto 3000, proyecto `e:\proyectos\control-produccion`).
 7. Toda variable de entorno nueva se añade a `.env.example` y al esquema de validación Joi (existente desde la tarea 1.1).
