@@ -8,6 +8,7 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import { DataSource } from 'typeorm';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './../src/app.module';
 import { HttpExceptionFilter } from './../src/common/filters/http-exception.filter';
 import { AuthService } from './../src/modules/auth/auth.service';
@@ -73,6 +74,17 @@ describe('Flujo de negocio completo (e2e)', () => {
       }),
     );
     app.useGlobalFilters(new HttpExceptionFilter());
+
+    // Configurar Swagger en la app de E2E
+    const swaggerConfig = new DocumentBuilder()
+      .setTitle('Control de Producción API')
+      .setDescription('Documentación de la API')
+      .setVersion('1.0')
+      .addBearerAuth()
+      .build();
+    const swaggerDocument = SwaggerModule.createDocument(app, swaggerConfig);
+    SwaggerModule.setup('api/docs', app, swaggerDocument);
+
     await app.init();
 
     // Crear el admin de pruebas directo en la BD de test
@@ -269,5 +281,13 @@ describe('Flujo de negocio completo (e2e)', () => {
     expect(pagoAudit).toBeDefined();
     expect(pagoAudit?.usuario).toBe(ADMIN_USER);
     expect(pagoAudit?.entidad).toBe('Pago');
+  });
+
+  it('swagger: GET /api/docs/ → responde 200 OK con la interfaz HTML', async () => {
+    const res = await request(app.getHttpServer())
+      .get('/api/docs/')
+      .expect(200);
+    expect(res.text).toContain('<html');
+    expect(res.text).toContain('swagger-ui');
   });
 });

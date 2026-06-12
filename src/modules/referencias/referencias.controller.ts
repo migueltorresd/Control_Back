@@ -14,6 +14,7 @@ import {
   Res,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { createReadStream } from 'fs';
 import { ReferenciasService } from './referencias.service';
 import { Referencia } from './entities/referencia.entity';
@@ -38,24 +39,35 @@ class CustomFileTypeValidator extends FileValidator<{ fileType: RegExp }> {
   }
 }
 
+@ApiTags('Referencias / Modelos')
+@ApiBearerAuth()
 @Controller('referencias')
 @Roles(Rol.ADMIN)
 export class ReferenciasController {
   constructor(private readonly referenciasService: ReferenciasService) {}
 
   @Get()
+  @ApiOperation({
+    summary: 'Obtener todas las referencias / modelos de calzado (ADMIN)',
+  })
   async findAll() {
     const list = await this.referenciasService.findAll();
     return list.map((r) => this.mapToFrontend(r));
   }
 
   @Get(':id')
+  @ApiOperation({
+    summary: 'Obtener una referencia específica por su ID (ADMIN)',
+  })
   async findOne(@Param('id') id: string) {
     const ref = await this.referenciasService.findOne(id);
     return this.mapToFrontend(ref);
   }
 
   @Post()
+  @ApiOperation({
+    summary: 'Crear o actualizar una referencia / modelo (ADMIN)',
+  })
   async save(@Body() dto: CreateReferenciaDto & { id?: string }) {
     let saved: Referencia;
     if (dto.id) {
@@ -70,6 +82,7 @@ export class ReferenciasController {
 
   @Post(':id/imagen')
   @UseInterceptors(FileInterceptor('imagen'))
+  @ApiOperation({ summary: 'Subir una imagen para la referencia (ADMIN)' })
   async uploadImagen(
     @Param('id') id: string,
     @UploadedFile(
@@ -93,6 +106,9 @@ export class ReferenciasController {
 
   @Get(':id/imagen')
   @Public()
+  @ApiOperation({
+    summary: 'Obtener el archivo de imagen de forma pública (Público)',
+  })
   async getImagen(
     @Param('id') id: string,
     @Res({ passthrough: true }) res: import('express').Response,
@@ -108,6 +124,9 @@ export class ReferenciasController {
   }
 
   @Delete(':id/imagen')
+  @ApiOperation({
+    summary: 'Eliminar la imagen asociada a la referencia (ADMIN)',
+  })
   async deleteImagen(@Param('id') id: string) {
     await this.referenciasService.deleteImagen(id);
     return { success: true };

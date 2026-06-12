@@ -31,4 +31,7 @@ export const envValidationSchema = Joi.object({
 
   // Directorio de subidas
   UPLOADS_DIR: Joi.string().default('./uploads'),
+
+  // Swagger
+  SWAGGER_ENABLED: Joi.boolean().default(false),
 }).options({ allowUnknown: true }); // permite variables de SO sin romper el arranque

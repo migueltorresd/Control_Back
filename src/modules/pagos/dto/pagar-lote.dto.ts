@@ -1,4 +1,10 @@
-import { IsNotEmpty, IsArray, ValidateNested, IsString, IsEnum } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsArray,
+  ValidateNested,
+  IsString,
+  IsEnum,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { Oficio } from '../../../common/enums/oficio.enum';
 

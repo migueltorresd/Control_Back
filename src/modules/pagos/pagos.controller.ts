@@ -1,17 +1,21 @@
 import { Controller, Get, Post, Body, Query, Param, Req } from '@nestjs/common';
 import { Request } from 'express';
+import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { PagosService } from './pagos.service';
 import { PagarLoteDto } from './dto/pagar-lote.dto';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Rol } from '../auth/enums/rol.enum';
 import { UsuarioAutenticado } from '../auth/jwt.strategy';
 
+@ApiTags('Pagos')
+@ApiBearerAuth()
 @Controller('pagos')
 @Roles(Rol.ADMIN)
 export class PagosController {
   constructor(private readonly pagosService: PagosService) {}
 
   @Get()
+  @ApiOperation({ summary: 'Obtener historial de pagos de operarios (ADMIN)' })
   async findAll(@Query('operarioId') operarioId?: string) {
     const pagos = await this.pagosService.findAll(operarioId);
     // Retornamos mapeado con la estructura que el frontend espera
@@ -28,6 +32,9 @@ export class PagosController {
   }
 
   @Post('lote')
+  @ApiOperation({
+    summary: 'Pagar un lote de registros de producción aprobados (ADMIN)',
+  })
   async pagarLote(
     @Body() dto: PagarLoteDto,
     @Req() req: Request & { user: UsuarioAutenticado },
@@ -38,6 +45,9 @@ export class PagosController {
   }
 
   @Post(':regId')
+  @ApiOperation({
+    summary: 'Pagar un único registro de producción aprobado (ADMIN)',
+  })
   async pagarIndividual(
     @Param('regId') regId: string,
     @Req() req: Request & { user: UsuarioAutenticado },
@@ -60,6 +70,10 @@ export class PagosController {
   }
 
   @Post('anular/:regId')
+  @ApiOperation({
+    summary:
+      'Anular un pago realizado y retornar el registro a estado aprobado (ADMIN)',
+  })
   async anularPago(
     @Param('regId') regId: string,
     @Req() req: Request & { user: UsuarioAutenticado },

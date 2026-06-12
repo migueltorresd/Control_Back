@@ -10,6 +10,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { Request } from 'express';
+import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { ValesService } from './vales.service';
 import { ProduccionService, ResultadoRevision } from './produccion.service';
 import { CreateValeDto } from './dto/create-vale.dto';
@@ -21,6 +22,8 @@ import { Rol } from '../auth/enums/rol.enum';
 import { UsuarioAutenticado } from '../auth/jwt.strategy';
 import { EstadoProduccion } from '../../common/enums/estado-produccion.enum';
 
+@ApiTags('Vales y Producción')
+@ApiBearerAuth()
 @Controller('vales')
 @Roles(Rol.ADMIN)
 export class ValesController {
@@ -30,18 +33,21 @@ export class ValesController {
   ) {}
 
   @Get()
+  @ApiOperation({ summary: 'Obtener todos los vales registrados (ADMIN)' })
   async findAll() {
     const vales = await this.valesService.findAll();
     return vales.map((v) => this.mapToFrontend(v));
   }
 
   @Get(':id')
+  @ApiOperation({ summary: 'Obtener un vale por su código/ID (ADMIN)' })
   async findOne(@Param('id') id: string) {
     const vale = await this.valesService.findOne(id);
     return this.mapToFrontend(vale);
   }
 
   @Post()
+  @ApiOperation({ summary: 'Crear un nuevo vale de producción (ADMIN)' })
   async create(@Body() dto: CreateValeDto) {
     const fecha = dto.fecha || new Date().toISOString().split('T')[0];
 
@@ -63,6 +69,10 @@ export class ValesController {
   }
 
   @Post(':id/registro')
+  @ApiOperation({
+    summary:
+      'Registrar la producción de un operario para una etapa del vale (ADMIN)',
+  })
   async addRegistro(
     @Param('id') valeId: string,
     @Body() dto: RegisterProduccionDto,
@@ -78,6 +88,10 @@ export class ValesController {
   }
 
   @Patch(':id/registro/:regId')
+  @ApiOperation({
+    summary:
+      'Actualizar estado del registro de producción (Excepto aprobado directo) (ADMIN)',
+  })
   async updateRegistro(
     @Param('id') valeId: string,
     @Param('regId') regId: string,
@@ -101,17 +115,24 @@ export class ValesController {
   }
 
   @Post(':id/registro/:regId/revision')
+  @ApiOperation({
+    summary:
+      'Realizar revisión de control de calidad con aprobación parcial/total y motivos de rechazo (ADMIN)',
+  })
   async revisarRegistro(
     @Param('id') valeId: string,
     @Param('regId') regId: string,
     @Body() dto: RevisarProduccionDto,
     @Req() req: Request & { user: UsuarioAutenticado },
   ): Promise<ResultadoRevision> {
-    const username = req.user?.username || null;
+    const username = req.user?.username ?? undefined;
     return this.produccionService.revisar(valeId, regId, dto, username);
   }
 
   @Delete(':id/registro/:regId')
+  @ApiOperation({
+    summary: 'Eliminar un registro de producción no liquidado del vale (ADMIN)',
+  })
   async deleteRegistro(
     @Param('id') valeId: string,
     @Param('regId') regId: string,
