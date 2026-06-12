@@ -52,7 +52,7 @@ Una tarea no se marca ✅ por tener un commit con el nombre correcto — se marc
 | ✅ | 2.4 Login en el frontend | [2.4-login-frontend.md](2.4-login-frontend.md) — commit front (pendiente al cierre del UAT) | 2 |
 | ✅ | 3.1 Validación de tallas | [3.1-validacion-tallas.md](3.1-validacion-tallas.md) — commits `ffa17af` + fix `c245192` | 3 — Tests y CI |
 | ✅ | 3.2 Unit tests de negocio | [3.2-unit-tests.md](3.2-unit-tests.md) — commit `a6561fd` | 3 |
-| ⬜ | 3.3 Test e2e del flujo completo | [3.3-e2e-tests.md](3.3-e2e-tests.md) | 3 |
+| ✅ | 3.3 Test e2e del flujo completo | [3.3-e2e-tests.md](3.3-e2e-tests.md) — commit `bbe5f71` | 3 |
 | ⬜ | 3.4 CI + Dependabot | [3.4-ci.md](3.4-ci.md) | 3 |
 | ⬜ | 4.1 Logging estructurado | [4.1-logging.md](4.1-logging.md) | 4 — Operabilidad |
 | ⬜ | 4.2 Auditoría mínima | [4.2-auditoria.md](4.2-auditoria.md) | 4 |
