@@ -56,17 +56,18 @@ describe('VentasService', () => {
         valeId: 'V-0001',
         pares: 5,
         precioUnitario: 95000,
-        fecha: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
       }),
     );
+    const calls = repository.createAndSave.mock.calls as [
+      [{ fecha: string }],
+    ];
+    expect(calls[0][0].fecha).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     expect(result.id).toBe('VT-0002');
   });
 
   it('remove con venta inexistente → 404', async () => {
     repository.findByIdWithRelations.mockResolvedValue(null);
-    await expect(service.remove('VT-9999')).rejects.toThrow(
-      NotFoundException,
-    );
+    await expect(service.remove('VT-9999')).rejects.toThrow(NotFoundException);
     expect(repository.remove).not.toHaveBeenCalled();
   });
 });

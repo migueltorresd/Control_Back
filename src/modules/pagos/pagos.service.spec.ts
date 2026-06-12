@@ -33,9 +33,7 @@ describe('PagosService', () => {
 
   const repository = {
     dataSource: {
-      transaction: jest.fn((cb: (m: typeof manager) => unknown) =>
-        cb(manager),
-      ),
+      transaction: jest.fn((cb: (m: typeof manager) => unknown) => cb(manager)),
     },
     nextId: jest.fn().mockResolvedValue('PG-0002'),
     findAllOrdered: jest.fn(),
@@ -78,17 +76,13 @@ describe('PagosService', () => {
 
     it('registro no aprobado → 400', async () => {
       regEnBd = { ...regAprobado, estado: EstadoProduccion.REGISTRADO };
-      await expect(service.pagar('reg-1')).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(service.pagar('reg-1')).rejects.toThrow(BadRequestException);
       expect(manager.insert).not.toHaveBeenCalled();
     });
 
     it('registro ya pagado → 400 (evita doble pago)', async () => {
       regEnBd = { ...regAprobado, estado: EstadoProduccion.PAGADO };
-      await expect(service.pagar('reg-1')).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(service.pagar('reg-1')).rejects.toThrow(BadRequestException);
     });
 
     it('camino feliz: usa el monto congelado y marca pagado en la misma transacción', async () => {

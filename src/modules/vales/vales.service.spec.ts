@@ -28,9 +28,7 @@ describe('ValesService', () => {
 
   it('findOne inexistente → 404', async () => {
     repository.findByIdWithRelations.mockResolvedValue(null);
-    await expect(service.findOne('V-9999')).rejects.toThrow(
-      NotFoundException,
-    );
+    await expect(service.findOne('V-9999')).rejects.toThrow(NotFoundException);
   });
 
   it('create con referencia inexistente → 404 y no crea nada', async () => {

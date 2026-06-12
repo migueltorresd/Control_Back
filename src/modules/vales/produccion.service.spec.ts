@@ -298,17 +298,17 @@ describe('ProduccionService', () => {
         paresYaRegistrados: 15,
       });
 
-      await expect(
-        service.registerProduccion('V-0001', dto),
-      ).rejects.toThrow(/Cupo superado/);
+      await expect(service.registerProduccion('V-0001', dto)).rejects.toThrow(
+        /Cupo superado/,
+      );
     });
 
     it('vale inexistente → 404 propagado', async () => {
       valesService.findOne.mockRejectedValue(new NotFoundException());
 
-      await expect(
-        service.registerProduccion('V-9999', dto),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.registerProduccion('V-9999', dto)).rejects.toThrow(
+        NotFoundException,
+      );
       expect(repository.registrarProduccionAtomico).not.toHaveBeenCalled();
     });
 
@@ -316,9 +316,9 @@ describe('ProduccionService', () => {
       valesService.findOne.mockResolvedValue(vale);
       operariosService.findOne.mockRejectedValue(new NotFoundException());
 
-      await expect(
-        service.registerProduccion('V-0001', dto),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.registerProduccion('V-0001', dto)).rejects.toThrow(
+        NotFoundException,
+      );
       expect(repository.registrarProduccionAtomico).not.toHaveBeenCalled();
     });
   });
