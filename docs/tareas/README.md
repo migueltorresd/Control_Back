@@ -50,8 +50,8 @@ Una tarea no se marca ✅ por tener un commit con el nombre correcto — se marc
 | ✅ | 2.2 Autenticación JWT | [2.2-auth-jwt.md](2.2-auth-jwt.md) — commit `428bba6` | 2 |
 | ✅ | 2.3 Endurecimiento HTTP + /api/v1 | [2.3-endurecimiento-http.md](2.3-endurecimiento-http.md) — commits `635c698`/front `ebbe36b` | 2 |
 | ✅ | 2.4 Login en el frontend | [2.4-login-frontend.md](2.4-login-frontend.md) — commit front (pendiente al cierre del UAT) | 2 |
-| ⬜ | 3.1 Validación de tallas | [3.1-validacion-tallas.md](3.1-validacion-tallas.md) | 3 — Tests y CI |
-| ⬜ | 3.2 Unit tests de negocio | [3.2-unit-tests.md](3.2-unit-tests.md) | 3 |
+| ✅ | 3.1 Validación de tallas | [3.1-validacion-tallas.md](3.1-validacion-tallas.md) — commits `ffa17af` + fix `c245192` | 3 — Tests y CI |
+| ✅ | 3.2 Unit tests de negocio | [3.2-unit-tests.md](3.2-unit-tests.md) — commit `a6561fd` | 3 |
 | ⬜ | 3.3 Test e2e del flujo completo | [3.3-e2e-tests.md](3.3-e2e-tests.md) | 3 |
 | ⬜ | 3.4 CI + Dependabot | [3.4-ci.md](3.4-ci.md) | 3 |
 | ⬜ | 4.1 Logging estructurado | [4.1-logging.md](4.1-logging.md) | 4 — Operabilidad |
