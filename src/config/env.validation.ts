@@ -11,6 +11,13 @@ export const envValidationSchema = Joi.object({
   // Servidor
   PORT: Joi.number().integer().positive().default(3001),
 
+  // Autenticación JWT
+  JWT_SECRET: Joi.string().min(32).required().messages({
+    'string.min': 'JWT_SECRET debe tener al menos 32 caracteres',
+    'any.required': 'JWT_SECRET es requerido',
+  }),
+  JWT_EXPIRES_IN: Joi.string().default('8h'),
+
   // Entorno
   NODE_ENV: Joi.string()
     .valid('development', 'production', 'test')

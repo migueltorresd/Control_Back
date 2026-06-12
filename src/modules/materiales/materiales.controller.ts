@@ -9,8 +9,11 @@ import {
 import { MaterialesService } from './materiales.service';
 import { CreateMaterialDto } from './dto/create-material.dto';
 import { UpdateMaterialDto } from './dto/update-material.dto';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { Rol } from '../auth/enums/rol.enum';
 
 @Controller('materiales')
+@Roles(Rol.ADMIN)
 export class MaterialesController {
   constructor(private readonly materialesService: MaterialesService) {}
 

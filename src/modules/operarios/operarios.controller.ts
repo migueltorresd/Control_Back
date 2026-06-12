@@ -2,8 +2,11 @@ import { Controller, Get, Post, Body, Param } from '@nestjs/common';
 import { OperariosService } from './operarios.service';
 import { CreateOperarioDto } from './dto/create-operario.dto';
 import { UpdateOperarioDto } from './dto/update-operario.dto';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { Rol } from '../auth/enums/rol.enum';
 
 @Controller('operarios')
+@Roles(Rol.ADMIN)
 export class OperariosController {
   constructor(private readonly operariosService: OperariosService) {}
 

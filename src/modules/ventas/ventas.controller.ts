@@ -11,8 +11,11 @@ import { VentasService } from './ventas.service';
 import { CreateVentaDto } from './dto/create-venta.dto';
 import { UpdateVentaDto } from './dto/update-venta.dto';
 import { Venta } from './entities/venta.entity';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { Rol } from '../auth/enums/rol.enum';
 
 @Controller('ventas')
+@Roles(Rol.ADMIN)
 export class VentasController {
   constructor(private readonly ventasService: VentasService) {}
 

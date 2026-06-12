@@ -2,8 +2,11 @@ import { Controller, Get, Post, Body, Param } from '@nestjs/common';
 import { ReferenciasService } from './referencias.service';
 import { CreateReferenciaDto } from './dto/create-referencia.dto';
 import { UpdateReferenciaDto } from './dto/update-referencia.dto';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { Rol } from '../auth/enums/rol.enum';
 
 @Controller('referencias')
+@Roles(Rol.ADMIN)
 export class ReferenciasController {
   constructor(private readonly referenciasService: ReferenciasService) {}
 

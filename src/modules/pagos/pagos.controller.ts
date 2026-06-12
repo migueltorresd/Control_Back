@@ -1,8 +1,11 @@
 import { Controller, Get, Post, Body, Query, Param } from '@nestjs/common';
 import { PagosService } from './pagos.service';
 import { PagarLoteDto } from './dto/pagar-lote.dto';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { Rol } from '../auth/enums/rol.enum';
 
 @Controller('pagos')
+@Roles(Rol.ADMIN)
 export class PagosController {
   constructor(private readonly pagosService: PagosService) {}
 

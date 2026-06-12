@@ -1,8 +1,14 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { envValidationSchema } from './config/env.validation';
+
+// Autenticación (guards globales fail-closed)
+import { AuthModule } from './modules/auth/auth.module';
+import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
+import { RolesGuard } from './modules/auth/guards/roles.guard';
 
 // Módulos de negocio
 import { MaterialesModule } from './modules/materiales/materiales.module';
@@ -32,6 +38,7 @@ import { VentasModule } from './modules/ventas/ventas.module';
         migrationsRun: false, // Las migraciones se corren manualmente: pnpm migration:run
       }),
     }),
+    AuthModule,
     MaterialesModule,
     ReferenciasModule,
     OperariosModule,
@@ -40,6 +47,10 @@ import { VentasModule } from './modules/ventas/ventas.module';
     VentasModule,
   ],
   controllers: [],
-  providers: [],
+  providers: [
+    // Fail-closed: primero autenticación, luego autorización por rol
+    { provide: APP_GUARD, useClass: JwtAuthGuard },
+    { provide: APP_GUARD, useClass: RolesGuard },
+  ],
 })
 export class AppModule {}

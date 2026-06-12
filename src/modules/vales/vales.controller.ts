@@ -12,8 +12,11 @@ import { ProduccionService } from './produccion.service';
 import { CreateValeDto } from './dto/create-vale.dto';
 import { RegisterProduccionDto } from './dto/register-produccion.dto';
 import { UpdateProduccionEstadoDto } from './dto/update-produccion-estado.dto';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { Rol } from '../auth/enums/rol.enum';
 
 @Controller('vales')
+@Roles(Rol.ADMIN)
 export class ValesController {
   constructor(
     private readonly valesService: ValesService,
