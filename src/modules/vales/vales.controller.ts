@@ -67,6 +67,7 @@ export class ValesController {
       operarioId: saved.operarioId,
       pares: saved.pares,
       estado: saved.estado,
+      montoPagado: Number(saved.montoPagado),
     };
   }
 
@@ -112,6 +113,7 @@ export class ValesController {
             operarioId: r.operarioId,
             pares: r.pares,
             estado: r.estado,
+            montoPagado: Number(r.montoPagado),
           });
         }
       });
