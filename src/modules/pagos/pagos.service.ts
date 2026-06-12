@@ -2,6 +2,7 @@ import {
   Injectable,
   BadRequestException,
   NotFoundException,
+  Logger,
 } from '@nestjs/common';
 import { PagosRepository } from './pagos.repository';
 import { ProduccionService } from '../vales/produccion.service';
@@ -13,6 +14,8 @@ import { Vale } from '../vales/entities/vale.entity';
 
 @Injectable()
 export class PagosService {
+  private readonly logger = new Logger(PagosService.name);
+
   constructor(
     private readonly repository: PagosRepository,
     private readonly produccionService: ProduccionService,
@@ -26,7 +29,7 @@ export class PagosService {
   }
 
   // Pagar un solo registro
-  async pagar(regId: string): Promise<Pago> {
+  async pagar(regId: string, username?: string): Promise<Pago> {
     return this.repository.dataSource.transaction(async (manager) => {
       // 1. Obtener el registro de producción y bloquearlo con pessimistic_write (sin join)
       const reg = await manager.findOne(ProduccionReg, {
@@ -83,6 +86,11 @@ export class PagosService {
 
       // 6. Insertar el pago (insert, no save: nunca sobrescribir)
       await manager.insert(Pago, pagoData);
+
+      this.logger.log(
+        `Pago creado: Comprobante ${pagoId} registrado por ${username || 'system'} para el operario ${reg.operarioId} en el vale ${reg.valeId} (etapa: ${reg.etapa}, pares: ${reg.pares}, monto: ${reg.montoPagado}, regId: ${reg.id})`,
+      );
+
       return manager.findOneByOrFail(Pago, { id: pagoId });
     });
   }
@@ -90,6 +98,7 @@ export class PagosService {
   // Pagar lote de registros
   async pagarLote(
     items: { vale: string; etapa: Oficio; regId: string }[],
+    username?: string,
   ): Promise<Pago[]> {
     return this.repository.dataSource.transaction(async (manager) => {
       const pagos: Pago[] = [];
@@ -157,7 +166,12 @@ export class PagosService {
 
         // 6. Insertar el pago (insert, no save: nunca sobrescribir)
         await manager.insert(Pago, pagoData);
-        pagos.push(await manager.findOneByOrFail(Pago, { id: pagoId }));
+        const savedPago = await manager.findOneByOrFail(Pago, { id: pagoId });
+        pagos.push(savedPago);
+
+        this.logger.log(
+          `Pago creado (Lote): Comprobante ${pagoId} registrado por ${username || 'system'} para el operario ${reg.operarioId} en el vale ${reg.valeId} (etapa: ${reg.etapa}, pares: ${reg.pares}, monto: ${reg.montoPagado}, regId: ${reg.id})`,
+        );
       }
 
       return pagos;
@@ -165,7 +179,7 @@ export class PagosService {
   }
 
   // Anular un pago (por el ID del registro de producción)
-  async anularPagoPorRegistro(regId: string): Promise<void> {
+  async anularPagoPorRegistro(regId: string, username?: string): Promise<void> {
     return this.repository.dataSource.transaction(async (manager) => {
       // 1. Buscar el comprobante de pago asociado a la producción
       const reg = await manager.findOne(ProduccionReg, {
@@ -197,6 +211,10 @@ export class PagosService {
 
       // 3. Borrar el comprobante de pago
       await manager.delete(Pago, pago.id);
+
+      this.logger.log(
+        `Pago anulado: Comprobante ${pago.id} para el operario ${pago.operarioId} en el vale ${pago.valeId} (etapa: ${pago.etapa}, pares: ${pago.pares}, monto: ${pago.monto}, regId: ${regId}) anulado por ${username || 'system'}`,
+      );
     });
   }
 }

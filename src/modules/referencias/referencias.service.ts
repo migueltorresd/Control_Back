@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import * as fs from 'fs';
 import * as path from 'path';
 import { ConfigService } from '@nestjs/config';
@@ -11,6 +11,8 @@ import { Material } from '../materiales/entities/material.entity';
 
 @Injectable()
 export class ReferenciasService {
+  private readonly logger = new Logger(ReferenciasService.name);
+
   constructor(
     private readonly repository: ReferenciasRepository,
     private readonly materialesService: MaterialesService,
@@ -123,7 +125,10 @@ export class ReferenciasService {
         try {
           fs.unlinkSync(oldPath);
         } catch (err) {
-          console.error(`Error al borrar archivo viejo: ${oldPath}`, err);
+          this.logger.error(
+            `Error al borrar archivo viejo: ${oldPath}`,
+            err instanceof Error ? err.stack : err,
+          );
         }
       }
     }
@@ -187,7 +192,10 @@ export class ReferenciasService {
         try {
           fs.unlinkSync(filePath);
         } catch (err) {
-          console.error(`Error al borrar archivo: ${filePath}`, err);
+          this.logger.error(
+            `Error al borrar archivo: ${filePath}`,
+            err instanceof Error ? err.stack : err,
+          );
         }
       }
       referencia.imagenExt = null;

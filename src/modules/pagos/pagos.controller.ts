@@ -1,8 +1,10 @@
-import { Controller, Get, Post, Body, Query, Param } from '@nestjs/common';
+import { Controller, Get, Post, Body, Query, Param, Req } from '@nestjs/common';
+import { Request } from 'express';
 import { PagosService } from './pagos.service';
 import { PagarLoteDto } from './dto/pagar-lote.dto';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Rol } from '../auth/enums/rol.enum';
+import { UsuarioAutenticado } from '../auth/jwt.strategy';
 
 @Controller('pagos')
 @Roles(Rol.ADMIN)
@@ -26,14 +28,22 @@ export class PagosController {
   }
 
   @Post('lote')
-  async pagarLote(@Body() dto: PagarLoteDto) {
-    const result = await this.pagosService.pagarLote(dto.items);
+  async pagarLote(
+    @Body() dto: PagarLoteDto,
+    @Req() req: Request & { user: UsuarioAutenticado },
+  ) {
+    const username = req.user?.username || null;
+    const result = await this.pagosService.pagarLote(dto.items, username);
     return { success: true, count: result.length };
   }
 
   @Post(':regId')
-  async pagarIndividual(@Param('regId') regId: string) {
-    const pago = await this.pagosService.pagar(regId);
+  async pagarIndividual(
+    @Param('regId') regId: string,
+    @Req() req: Request & { user: UsuarioAutenticado },
+  ) {
+    const username = req.user?.username || null;
+    const pago = await this.pagosService.pagar(regId, username);
     return {
       success: true,
       pago: {
@@ -50,8 +60,12 @@ export class PagosController {
   }
 
   @Post('anular/:regId')
-  async anularPago(@Param('regId') regId: string) {
-    await this.pagosService.anularPagoPorRegistro(regId);
+  async anularPago(
+    @Param('regId') regId: string,
+    @Req() req: Request & { user: UsuarioAutenticado },
+  ) {
+    const username = req.user?.username || null;
+    await this.pagosService.anularPagoPorRegistro(regId, username);
     return { success: true };
   }
 }

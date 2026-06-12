@@ -3,6 +3,7 @@ import {
   NotFoundException,
   BadRequestException,
   ConflictException,
+  Logger,
 } from '@nestjs/common';
 import { EntityManager } from 'typeorm';
 import { ProduccionRepository } from './produccion.repository';
@@ -25,6 +26,8 @@ export interface ResultadoRevision {
 
 @Injectable()
 export class ProduccionService {
+  private readonly logger = new Logger(ProduccionService.name);
+
   constructor(
     private readonly repository: ProduccionRepository,
     private readonly valesService: ValesService,
@@ -256,6 +259,11 @@ export class ProduccionService {
       // 3. Si paresAprobados === 0: eliminar registro de producción
       if (paresAprobados === 0) {
         await manager.remove(ProduccionReg, reg);
+
+        this.logger.log(
+          `Producción revertida: Registro ${reg.id} del vale ${reg.valeId} (etapa: ${reg.etapa}, operario: ${reg.operarioId}, pares originales: ${reg.pares}) fue revertido/eliminado por completo por el usuario ${username || 'system'}.`,
+        );
+
         return {
           success: true,
           deleted: true,
@@ -289,6 +297,11 @@ export class ProduccionService {
       reg.revisadoEn = new Date();
 
       await manager.save(ProduccionReg, reg);
+
+      this.logger.log(
+        `Producción aprobada: Registro ${reg.id} del vale ${reg.valeId} (etapa: ${reg.etapa}, operario: ${reg.operarioId}) fue aprobado con ${paresAprobados} pares (monto congelado: ${nuevoMonto}) por el usuario ${username || 'system'}.`,
+      );
+
       return { success: true, deleted: false, paresAprobados, paresRechazados };
     });
   }
