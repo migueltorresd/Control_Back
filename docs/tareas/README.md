@@ -44,7 +44,7 @@ Una tarea no se marca ✅ por tener un commit con el nombre correcto — se marc
 | ✅ | 1.1 Configuración validada | [1.1-configuracion-validada.md](1.1-configuracion-validada.md) — commit `0b45dfa` | 1 — Integridad de datos |
 | ✅ | 1.2 Migraciones TypeORM | [1.2-migraciones-typeorm.md](1.2-migraciones-typeorm.md) — commit `e04fbe0` | 1 |
 | ✅ | 1.3 Seed como comando | [1.3-seed-comando.md](1.3-seed-comando.md) — commit `94c35e1` | 1 |
-| ⬜ | 1.4 IDs por secuencia | [1.4-ids-secuencia.md](1.4-ids-secuencia.md) | 1 |
+| ✅ | 1.4 IDs por secuencia | [1.4-ids-secuencia.md](1.4-ids-secuencia.md) — commit `f5f2714` | 1 |
 | ⬜ | 1.5 Operaciones atómicas | [1.5-operaciones-atomicas.md](1.5-operaciones-atomicas.md) | 1 |
 | ⬜ | 2.1 Filtro de excepciones seguro | [2.1-filtro-excepciones.md](2.1-filtro-excepciones.md) | 2 — Seguridad perimetral |
 | ⬜ | 2.2 Autenticación JWT | [2.2-auth-jwt.md](2.2-auth-jwt.md) | 2 |

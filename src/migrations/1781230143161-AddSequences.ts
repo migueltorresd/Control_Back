@@ -6,14 +6,17 @@ export class AddSequences1781230143161 implements MigrationInterface {
     public async up(queryRunner: QueryRunner): Promise<void> {
         // --- Secuencia para vales (ID presentación: V-0001) ---
         await queryRunner.query(`CREATE SEQUENCE IF NOT EXISTS vales_seq`);
+        // setval con is_called=false: el próximo nextval devuelve exactamente ese valor.
+        // Así una BD vacía empieza en V-0001 (no en V-0002).
         await queryRunner.query(`
             SELECT setval(
                 'vales_seq',
-                GREATEST(1, COALESCE((
+                COALESCE((
                     SELECT MAX(substring(vale FROM 3)::int)
                     FROM vales
                     WHERE vale ~ '^V-[0-9]+$'
-                ), 0))
+                ), 0) + 1,
+                false
             )
         `);
 
@@ -22,11 +25,12 @@ export class AddSequences1781230143161 implements MigrationInterface {
         await queryRunner.query(`
             SELECT setval(
                 'ventas_seq',
-                GREATEST(1, COALESCE((
+                COALESCE((
                     SELECT MAX(substring(id FROM 4)::int)
                     FROM ventas
                     WHERE id ~ '^VT-[0-9]+$'
-                ), 0))
+                ), 0) + 1,
+                false
             )
         `);
 
@@ -35,11 +39,12 @@ export class AddSequences1781230143161 implements MigrationInterface {
         await queryRunner.query(`
             SELECT setval(
                 'pagos_seq',
-                GREATEST(1, COALESCE((
+                COALESCE((
                     SELECT MAX(substring(id FROM 4)::int)
                     FROM pagos
                     WHERE id ~ '^PG-[0-9]+$'
-                ), 0))
+                ), 0) + 1,
+                false
             )
         `);
     }
