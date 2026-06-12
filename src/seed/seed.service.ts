@@ -1,8 +1,7 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
-// Entities modularizados
 import { Material } from '../modules/materiales/entities/material.entity';
 import { Referencia } from '../modules/referencias/entities/referencia.entity';
 import { Operario } from '../modules/operarios/entities/operario.entity';
@@ -10,13 +9,11 @@ import { Vale } from '../modules/vales/entities/vale.entity';
 import { ProduccionReg } from '../modules/vales/entities/produccion-reg.entity';
 import { Venta } from '../modules/ventas/entities/venta.entity';
 import { Pago } from '../modules/pagos/entities/pago.entity';
-
-// Enums
 import { Oficio } from '../common/enums/oficio.enum';
 import { EstadoProduccion } from '../common/enums/estado-produccion.enum';
 
 @Injectable()
-export class SeedService implements OnModuleInit {
+export class SeedService {
   constructor(
     @InjectRepository(Material)
     private readonly materialRepo: Repository<Material>,
@@ -34,56 +31,22 @@ export class SeedService implements OnModuleInit {
     private readonly pagoRepo: Repository<Pago>,
   ) {}
 
-  async onModuleInit() {
-    await this.seed();
-  }
-
   async seed() {
     const materialsCount = await this.materialRepo.count();
     if (materialsCount > 0) {
-      console.log('Database already has data. Skipping seed.');
+      console.log('La base de datos ya tiene datos. Seed omitido.');
       return;
     }
 
-    console.log('Seeding initial data...');
+    console.log('Poblando la base de datos con datos de demostración...');
 
     // 1. Materiales
     const materiales = [
-      {
-        id: 'MT-01',
-        nombre: 'Cuero',
-        proveedor: 'Curtiduría León',
-        unidad: 'pie²',
-        precio: 12000,
-      },
-      {
-        id: 'MT-02',
-        nombre: 'Suela',
-        proveedor: 'Suelas Guanajuato',
-        unidad: 'par',
-        precio: 9000,
-      },
-      {
-        id: 'MT-03',
-        nombre: 'Cordón',
-        proveedor: 'Accesorios Express',
-        unidad: 'unidad',
-        precio: 1500,
-      },
-      {
-        id: 'MT-04',
-        nombre: 'Pegante',
-        proveedor: 'Químicos del Calzado',
-        unidad: 'kg',
-        precio: 28000,
-      },
-      {
-        id: 'MT-05',
-        nombre: 'Forro',
-        proveedor: 'Pieles del Bajío',
-        unidad: 'par',
-        precio: 4500,
-      },
+      { id: 'MT-01', nombre: 'Cuero', proveedor: 'Curtiduría León', unidad: 'pie²', precio: 12000 },
+      { id: 'MT-02', nombre: 'Suela', proveedor: 'Suelas Guanajuato', unidad: 'par', precio: 9000 },
+      { id: 'MT-03', nombre: 'Cordón', proveedor: 'Accesorios Express', unidad: 'unidad', precio: 1500 },
+      { id: 'MT-04', nombre: 'Pegante', proveedor: 'Químicos del Calzado', unidad: 'kg', precio: 28000 },
+      { id: 'MT-05', nombre: 'Forro', proveedor: 'Pieles del Bajío', unidad: 'par', precio: 4500 },
     ];
     await this.materialRepo.save(materiales);
 
@@ -147,42 +110,12 @@ export class SeedService implements OnModuleInit {
 
     // 3. Operarios
     const operarios = [
-      {
-        id: 'OP-01',
-        nombre: 'Pedro Ramírez',
-        oficio: Oficio.CORTADOR,
-        antiguedad: 2019,
-      },
-      {
-        id: 'OP-02',
-        nombre: 'José Martínez',
-        oficio: Oficio.CORTADOR,
-        antiguedad: 2021,
-      },
-      {
-        id: 'OP-03',
-        nombre: 'Luis Gómez',
-        oficio: Oficio.GUARNECEDOR,
-        antiguedad: 2017,
-      },
-      {
-        id: 'OP-04',
-        nombre: 'Carmen Díaz',
-        oficio: Oficio.GUARNECEDOR,
-        antiguedad: 2020,
-      },
-      {
-        id: 'OP-05',
-        nombre: 'Marta Ríos',
-        oficio: Oficio.SOLADOR,
-        antiguedad: 2016,
-      },
-      {
-        id: 'OP-06',
-        nombre: 'Andrea Soto',
-        oficio: Oficio.FINIZAJE,
-        antiguedad: 2022,
-      },
+      { id: 'OP-01', nombre: 'Pedro Ramírez', oficio: Oficio.CORTADOR, antiguedad: 2019 },
+      { id: 'OP-02', nombre: 'José Martínez', oficio: Oficio.CORTADOR, antiguedad: 2021 },
+      { id: 'OP-03', nombre: 'Luis Gómez', oficio: Oficio.GUARNECEDOR, antiguedad: 2017 },
+      { id: 'OP-04', nombre: 'Carmen Díaz', oficio: Oficio.GUARNECEDOR, antiguedad: 2020 },
+      { id: 'OP-05', nombre: 'Marta Ríos', oficio: Oficio.SOLADOR, antiguedad: 2016 },
+      { id: 'OP-06', nombre: 'Andrea Soto', oficio: Oficio.FINIZAJE, antiguedad: 2022 },
     ];
     await this.operarioRepo.save(operarios);
 
@@ -221,86 +154,29 @@ export class SeedService implements OnModuleInit {
     ];
     await this.valeRepo.save(vales);
 
-    // 5. Producción Registros
+    // 5. Registros de producción
     const prodRegs = [
-      {
-        valeId: 'V-0001',
-        etapa: Oficio.CORTADOR,
-        operarioId: 'OP-01',
-        pares: 40,
-        estado: EstadoProduccion.PAGADO,
-        montoPagado: 48000,
-      },
-      {
-        valeId: 'V-0001',
-        etapa: Oficio.GUARNECEDOR,
-        operarioId: 'OP-03',
-        pares: 25,
-        estado: EstadoProduccion.APROBADO,
-        montoPagado: 87500,
-      },
-      {
-        valeId: 'V-0001',
-        etapa: Oficio.GUARNECEDOR,
-        operarioId: 'OP-04',
-        pares: 15,
-        estado: EstadoProduccion.REGISTRADO,
-        montoPagado: 0,
-      },
-      {
-        valeId: 'V-0001',
-        etapa: Oficio.SOLADOR,
-        operarioId: 'OP-05',
-        pares: 40,
-        estado: EstadoProduccion.PAGADO,
-        montoPagado: 112000,
-      },
-      {
-        valeId: 'V-0001',
-        etapa: Oficio.FINIZAJE,
-        operarioId: 'OP-06',
-        pares: 35,
-        estado: EstadoProduccion.PAGADO,
-        montoPagado: 63000,
-      },
-      {
-        valeId: 'V-0002',
-        etapa: Oficio.CORTADOR,
-        operarioId: 'OP-02',
-        pares: 20,
-        estado: EstadoProduccion.APROBADO,
-        montoPagado: 30000,
-      },
+      { valeId: 'V-0001', etapa: Oficio.CORTADOR, operarioId: 'OP-01', pares: 40, estado: EstadoProduccion.PAGADO, montoPagado: 48000 },
+      { valeId: 'V-0001', etapa: Oficio.GUARNECEDOR, operarioId: 'OP-03', pares: 25, estado: EstadoProduccion.APROBADO, montoPagado: 87500 },
+      { valeId: 'V-0001', etapa: Oficio.GUARNECEDOR, operarioId: 'OP-04', pares: 15, estado: EstadoProduccion.REGISTRADO, montoPagado: 0 },
+      { valeId: 'V-0001', etapa: Oficio.SOLADOR, operarioId: 'OP-05', pares: 40, estado: EstadoProduccion.PAGADO, montoPagado: 112000 },
+      { valeId: 'V-0001', etapa: Oficio.FINIZAJE, operarioId: 'OP-06', pares: 35, estado: EstadoProduccion.PAGADO, montoPagado: 63000 },
+      { valeId: 'V-0002', etapa: Oficio.CORTADOR, operarioId: 'OP-02', pares: 20, estado: EstadoProduccion.APROBADO, montoPagado: 30000 },
     ];
     await this.produccionRegRepo.save(prodRegs);
 
     // 6. Pagos
     const pagos = [
-      {
-        id: 'PG-seed1',
-        fecha: '2026-06-02',
-        operarioId: 'OP-01',
-        valeId: 'V-0001',
-        etapa: 'Cortador',
-        pares: 40,
-        monto: 48000,
-        refId: 'REF-001',
-      },
+      { id: 'PG-seed1', fecha: '2026-06-02', operarioId: 'OP-01', valeId: 'V-0001', etapa: 'Cortador', pares: 40, monto: 48000, refId: 'REF-001' },
     ];
     await this.pagoRepo.save(pagos);
 
-    // 7. Ventas (con el nuevo esquema normalizado)
+    // 7. Ventas
     const ventas = [
-      {
-        id: 'VT-seed1',
-        fecha: '2026-06-05',
-        valeId: 'V-0001',
-        pares: 10,
-        precioUnitario: 95000,
-      },
+      { id: 'VT-seed1', fecha: '2026-06-05', valeId: 'V-0001', pares: 10, precioUnitario: 95000 },
     ];
     await this.ventaRepo.save(ventas);
 
-    console.log('Seeding completed successfully!');
+    console.log('Seed completado exitosamente.');
   }
 }
