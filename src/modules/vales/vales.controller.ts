@@ -82,13 +82,21 @@ export class ValesController {
     @Param('id') valeId: string,
     @Param('regId') regId: string,
     @Body() dto: UpdateProduccionEstadoDto,
+    @Req() req: Request & { user: UsuarioAutenticado },
   ) {
     if (dto.estado === EstadoProduccion.APROBADO) {
       throw new BadRequestException(
         'Use el endpoint de revisión para aprobar producción',
       );
     }
-    await this.produccionService.updateEstado(valeId, regId, dto.estado);
+    const username = req.user?.username ?? undefined;
+    await this.produccionService.updateEstado(
+      valeId,
+      regId,
+      dto.estado,
+      undefined,
+      username,
+    );
     return { success: true };
   }
 
@@ -107,8 +115,10 @@ export class ValesController {
   async deleteRegistro(
     @Param('id') valeId: string,
     @Param('regId') regId: string,
+    @Req() req: Request & { user: UsuarioAutenticado },
   ) {
-    await this.produccionService.deleteRegistro(valeId, regId);
+    const username = req.user?.username ?? undefined;
+    await this.produccionService.deleteRegistro(valeId, regId, username);
     return { success: true };
   }
 
@@ -193,7 +203,7 @@ interface ProduccionRegRaw {
   estado: string;
   montoPagado: number | string | null;
   revisadoPor: string | null;
-  revisadoEn: string | null;
+  revisadoEn: Date | string | null;
   etapa: string;
 }
 

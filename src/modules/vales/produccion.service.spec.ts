@@ -12,6 +12,7 @@ import { ReferenciasService } from '../referencias/referencias.service';
 import { Oficio } from '../../common/enums/oficio.enum';
 import { EstadoProduccion } from '../../common/enums/estado-produccion.enum';
 import { EntityManager } from 'typeorm';
+import { AuditoriaService } from '../auditoria/auditoria.service';
 
 describe('ProduccionService', () => {
   let service: ProduccionService;
@@ -40,6 +41,7 @@ describe('ProduccionService', () => {
   const valesService = { findOne: jest.fn() };
   const operariosService = { findOne: jest.fn() };
   const referenciasService = { findOne: jest.fn() };
+  const auditoriaService = { registrar: jest.fn() };
 
   const manager = {} as EntityManager;
 
@@ -84,6 +86,7 @@ describe('ProduccionService', () => {
         { provide: ValesService, useValue: valesService },
         { provide: OperariosService, useValue: operariosService },
         { provide: ReferenciasService, useValue: referenciasService },
+        { provide: AuditoriaService, useValue: auditoriaService },
       ],
     }).compile();
     service = module.get(ProduccionService);
@@ -103,7 +106,7 @@ describe('ProduccionService', () => {
         EstadoProduccion.REGISTRADO,
         EstadoProduccion.APROBADO,
         12000, // 10 pares × 1200
-        undefined,
+        mockManager,
       );
     });
 
@@ -138,7 +141,7 @@ describe('ProduccionService', () => {
         EstadoProduccion.APROBADO,
         EstadoProduccion.REGISTRADO,
         0,
-        undefined,
+        mockManager,
       );
     });
 
@@ -368,7 +371,7 @@ describe('ProduccionService', () => {
 
       await service.deleteRegistro('V-0001', 'reg-1');
 
-      expect(repository.removeReg).toHaveBeenCalledWith(reg, undefined);
+      expect(repository.removeReg).toHaveBeenCalledWith(reg, mockManager);
     });
   });
 

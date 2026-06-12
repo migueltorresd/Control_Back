@@ -8,6 +8,7 @@ import { ProduccionReg } from '../vales/entities/produccion-reg.entity';
 import { Vale } from '../vales/entities/vale.entity';
 import { EstadoProduccion } from '../../common/enums/estado-produccion.enum';
 import { Oficio } from '../../common/enums/oficio.enum';
+import { AuditoriaService } from '../auditoria/auditoria.service';
 
 describe('PagosService', () => {
   let service: PagosService;
@@ -41,6 +42,7 @@ describe('PagosService', () => {
   };
 
   const produccionService = { updateEstado: jest.fn() };
+  const auditoriaService = { registrar: jest.fn() };
 
   const regAprobado: Partial<ProduccionReg> = {
     id: 'reg-1',
@@ -63,6 +65,7 @@ describe('PagosService', () => {
         PagosService,
         { provide: PagosRepository, useValue: repository },
         { provide: ProduccionService, useValue: produccionService },
+        { provide: AuditoriaService, useValue: auditoriaService },
       ],
     }).compile();
     service = module.get(PagosService);

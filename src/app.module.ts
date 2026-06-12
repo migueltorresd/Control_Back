@@ -21,6 +21,7 @@ import { OperariosModule } from './modules/operarios/operarios.module';
 import { ValesModule } from './modules/vales/vales.module';
 import { PagosModule } from './modules/pagos/pagos.module';
 import { VentasModule } from './modules/ventas/ventas.module';
+import { AuditoriaModule } from './modules/auditoria/auditoria.module';
 
 @Module({
   imports: [
@@ -51,6 +52,7 @@ import { VentasModule } from './modules/ventas/ventas.module';
     ValesModule,
     PagosModule,
     VentasModule,
+    AuditoriaModule,
   ],
   controllers: [],
   providers: [

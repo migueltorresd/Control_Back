@@ -11,6 +11,7 @@ import { EstadoProduccion } from '../../common/enums/estado-produccion.enum';
 import { Oficio } from '../../common/enums/oficio.enum';
 import { ProduccionReg } from '../vales/entities/produccion-reg.entity';
 import { Vale } from '../vales/entities/vale.entity';
+import { AuditoriaService } from '../auditoria/auditoria.service';
 
 @Injectable()
 export class PagosService {
@@ -19,6 +20,7 @@ export class PagosService {
   constructor(
     private readonly repository: PagosRepository,
     private readonly produccionService: ProduccionService,
+    private readonly auditoriaService: AuditoriaService,
   ) {}
 
   async findAll(operarioId?: string): Promise<Pago[]> {
@@ -89,6 +91,25 @@ export class PagosService {
 
       this.logger.log(
         `Pago creado: Comprobante ${pagoId} registrado por ${username || 'system'} para el operario ${reg.operarioId} en el vale ${reg.valeId} (etapa: ${reg.etapa}, pares: ${reg.pares}, monto: ${reg.montoPagado}, regId: ${reg.id})`,
+      );
+
+      // Registrar auditoría
+      await this.auditoriaService.registrar(
+        {
+          usuario: username || 'system',
+          accion: 'PAGAR',
+          entidad: 'Pago',
+          entidadId: pagoId,
+          detalle: {
+            regId,
+            valeId: reg.valeId,
+            operarioId: reg.operarioId,
+            etapa: reg.etapa,
+            pares: reg.pares,
+            monto: reg.montoPagado,
+          },
+        },
+        manager,
       );
 
       return manager.findOneByOrFail(Pago, { id: pagoId });
@@ -172,6 +193,26 @@ export class PagosService {
         this.logger.log(
           `Pago creado (Lote): Comprobante ${pagoId} registrado por ${username || 'system'} para el operario ${reg.operarioId} en el vale ${reg.valeId} (etapa: ${reg.etapa}, pares: ${reg.pares}, monto: ${reg.montoPagado}, regId: ${reg.id})`,
         );
+
+        // Registrar auditoría
+        await this.auditoriaService.registrar(
+          {
+            usuario: username || 'system',
+            accion: 'PAGAR',
+            entidad: 'Pago',
+            entidadId: pagoId,
+            detalle: {
+              regId: reg.id,
+              valeId: reg.valeId,
+              operarioId: reg.operarioId,
+              etapa: reg.etapa,
+              pares: reg.pares,
+              monto: reg.montoPagado,
+              lote: true,
+            },
+          },
+          manager,
+        );
       }
 
       return pagos;
@@ -214,6 +255,25 @@ export class PagosService {
 
       this.logger.log(
         `Pago anulado: Comprobante ${pago.id} para el operario ${pago.operarioId} en el vale ${pago.valeId} (etapa: ${pago.etapa}, pares: ${pago.pares}, monto: ${pago.monto}, regId: ${regId}) anulado por ${username || 'system'}`,
+      );
+
+      // Registrar auditoría
+      await this.auditoriaService.registrar(
+        {
+          usuario: username || 'system',
+          accion: 'ANULAR_PAGO',
+          entidad: 'Pago',
+          entidadId: pago.id,
+          detalle: {
+            regId,
+            valeId: pago.valeId,
+            operarioId: pago.operarioId,
+            etapa: pago.etapa,
+            pares: pago.pares,
+            monto: pago.monto,
+          },
+        },
+        manager,
       );
     });
   }

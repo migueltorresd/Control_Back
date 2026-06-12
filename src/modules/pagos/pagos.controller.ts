@@ -32,7 +32,7 @@ export class PagosController {
     @Body() dto: PagarLoteDto,
     @Req() req: Request & { user: UsuarioAutenticado },
   ) {
-    const username = req.user?.username || null;
+    const username = req.user?.username ?? undefined;
     const result = await this.pagosService.pagarLote(dto.items, username);
     return { success: true, count: result.length };
   }
@@ -42,7 +42,7 @@ export class PagosController {
     @Param('regId') regId: string,
     @Req() req: Request & { user: UsuarioAutenticado },
   ) {
-    const username = req.user?.username || null;
+    const username = req.user?.username ?? undefined;
     const pago = await this.pagosService.pagar(regId, username);
     return {
       success: true,
@@ -64,7 +64,7 @@ export class PagosController {
     @Param('regId') regId: string,
     @Req() req: Request & { user: UsuarioAutenticado },
   ) {
-    const username = req.user?.username || null;
+    const username = req.user?.username ?? undefined;
     await this.pagosService.anularPagoPorRegistro(regId, username);
     return { success: true };
   }

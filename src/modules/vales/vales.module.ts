@@ -12,12 +12,14 @@ import { ProduccionService } from './produccion.service';
 import { ProduccionRepository } from './produccion.repository';
 import { ReferenciasModule } from '../referencias/referencias.module';
 import { OperariosModule } from '../operarios/operarios.module';
+import { AuditoriaModule } from '../auditoria/auditoria.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Vale, ValeTalla, ProduccionReg, Rechazo]),
     ReferenciasModule,
     OperariosModule,
+    AuditoriaModule,
   ],
   controllers: [ValesController, RechazosController],
   providers: [

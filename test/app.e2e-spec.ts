@@ -231,4 +231,43 @@ describe('Flujo de negocio completo (e2e)', () => {
       .expect(400);
     expect((res.body as ErrorBody).message).toContain('Cupo superado');
   });
+
+  it('auditoría: GET /auditoria sin token → 401', () => {
+    return request(app.getHttpServer()).get('/api/v1/auditoria').expect(401);
+  });
+
+  it('auditoría: GET /auditoria con token → retorna las acciones registradas en orden descendente', async () => {
+    const res = await request(app.getHttpServer())
+      .get('/api/v1/auditoria')
+      .set(auth())
+      .expect(200);
+
+    const body = res.body as {
+      data: Array<{
+        usuario: string;
+        accion: string;
+        entidad: string;
+        entidadId: string;
+        detalle: any;
+      }>;
+      total: number;
+      page: number;
+      limit: number;
+    };
+
+    expect(body.total).toBeGreaterThanOrEqual(3);
+    expect(body.page).toBe(1);
+    expect(body.limit).toBe(20);
+
+    const acciones = body.data.map((d) => d.accion);
+    expect(acciones).toContain('APROBAR_PRODUCCION');
+    expect(acciones).toContain('PAGAR');
+    expect(acciones).toContain('ANULAR_PAGO');
+
+    // Comprobar que el usuario es el administrador de pruebas
+    const pagoAudit = body.data.find((d) => d.accion === 'PAGAR');
+    expect(pagoAudit).toBeDefined();
+    expect(pagoAudit?.usuario).toBe(ADMIN_USER);
+    expect(pagoAudit?.entidad).toBe('Pago');
+  });
 });
