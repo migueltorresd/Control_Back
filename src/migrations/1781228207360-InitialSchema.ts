@@ -4,6 +4,8 @@ export class InitialSchema1781228207360 implements MigrationInterface {
     name = 'InitialSchema1781228207360'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        // Autocontenida: produccion_registros usa uuid_generate_v4(); no depender de que el runner instale la extensión
+        await queryRunner.query(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`);
         await queryRunner.query(`CREATE TABLE "materiales" ("id" character varying NOT NULL, "nombre" character varying NOT NULL, "proveedor" character varying, "unidad" character varying NOT NULL, "precio" double precision NOT NULL, CONSTRAINT "PK_bdb2febb21ca2abcdd52ec12559" PRIMARY KEY ("id"))`);
         await queryRunner.query(`CREATE TABLE "operarios" ("id" character varying NOT NULL, "nombre" character varying NOT NULL, "oficio" character varying NOT NULL, "antiguedad" integer, CONSTRAINT "PK_39fae8f788e11a394e056234fc5" PRIMARY KEY ("id"))`);
         await queryRunner.query(`CREATE TABLE "tarifas" ("id" SERIAL NOT NULL, "oficio" character varying NOT NULL, "valor" numeric(12,2) NOT NULL, "referenciaId" character varying, CONSTRAINT "UQ_047123c56ebb7557ccf4ee543b5" UNIQUE ("referenciaId", "oficio"), CONSTRAINT "PK_a264af6b1739ea9368d9326e158" PRIMARY KEY ("id"))`);

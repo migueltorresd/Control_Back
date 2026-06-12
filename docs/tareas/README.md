@@ -42,7 +42,7 @@ Una tarea no se marca ✅ por tener un commit con el nombre correcto — se marc
 |---|-------|---------|------|
 | ✅ | 0.1 Línea base | [0.1-linea-base.md](0.1-linea-base.md) — commit `02523a0` | 0 — Preparación |
 | ✅ | 1.1 Configuración validada | [1.1-configuracion-validada.md](1.1-configuracion-validada.md) — commit `0b45dfa` | 1 — Integridad de datos |
-| ⬜ | 1.2 Migraciones TypeORM | [1.2-migraciones-typeorm.md](1.2-migraciones-typeorm.md) | 1 |
+| ✅ | 1.2 Migraciones TypeORM | [1.2-migraciones-typeorm.md](1.2-migraciones-typeorm.md) — commit `e04fbe0` | 1 |
 | ⬜ | 1.3 Seed como comando | [1.3-seed-comando.md](1.3-seed-comando.md) | 1 |
 | ⬜ | 1.4 IDs por secuencia | [1.4-ids-secuencia.md](1.4-ids-secuencia.md) | 1 |
 | ⬜ | 1.5 Operaciones atómicas | [1.5-operaciones-atomicas.md](1.5-operaciones-atomicas.md) | 1 |
