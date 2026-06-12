@@ -21,6 +21,9 @@ export class Referencia {
   })
   precioVenta: number;
 
+  @Column({ type: 'varchar', nullable: true })
+  imagenExt: string | null;
+
   @OneToMany(() => Tarifa, (tarifa) => tarifa.referencia, {
     cascade: true,
     onDelete: 'CASCADE',

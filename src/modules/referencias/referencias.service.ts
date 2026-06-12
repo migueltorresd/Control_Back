@@ -1,4 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import * as fs from 'fs';
+import * as path from 'path';
+import { ConfigService } from '@nestjs/config';
 import { ReferenciasRepository } from './referencias.repository';
 import { MaterialesService } from '../materiales/materiales.service';
 import { CreateReferenciaDto } from './dto/create-referencia.dto';
@@ -11,6 +14,7 @@ export class ReferenciasService {
   constructor(
     private readonly repository: ReferenciasRepository,
     private readonly materialesService: MaterialesService,
+    private readonly configService: ConfigService,
   ) {}
 
   async findAll(): Promise<Referencia[]> {
@@ -90,5 +94,92 @@ export class ReferenciasService {
       );
     }
     return updated;
+  }
+
+  async uploadImagen(
+    id: string,
+    file: Express.Multer.File,
+  ): Promise<Referencia> {
+    const referencia = await this.findOne(id);
+
+    const uploadsDir = this.configService.get<string>('UPLOADS_DIR', './uploads');
+    const referenciasDir = path.join(uploadsDir, 'referencias');
+    if (!fs.existsSync(referenciasDir)) {
+      fs.mkdirSync(referenciasDir, { recursive: true });
+    }
+
+    const ext =
+      path.extname(file.originalname).substring(1).toLowerCase() || 'jpg';
+
+    if (referencia.imagenExt && referencia.imagenExt !== ext) {
+      const oldPath = path.join(referenciasDir, `${id}.${referencia.imagenExt}`);
+      if (fs.existsSync(oldPath)) {
+        try {
+          fs.unlinkSync(oldPath);
+        } catch (err) {
+          console.error(`Error al borrar archivo viejo: ${oldPath}`, err);
+        }
+      }
+    }
+
+    const newPath = path.join(referenciasDir, `${id}.${ext}`);
+    fs.writeFileSync(newPath, file.buffer);
+
+    referencia.imagenExt = ext;
+    return this.repository.save(referencia);
+  }
+
+  async getImagenPathAndMime(
+    id: string,
+  ): Promise<{ filePath: string; mimeType: string }> {
+    const referencia = await this.findOne(id);
+    if (!referencia.imagenExt) {
+      throw new NotFoundException(
+        `La referencia con ID ${id} no tiene imagen asociada`,
+      );
+    }
+
+    const uploadsDir = this.configService.get<string>('UPLOADS_DIR', './uploads');
+    const filePath = path.resolve(
+      path.join(uploadsDir, 'referencias', `${id}.${referencia.imagenExt}`),
+    );
+
+    if (!fs.existsSync(filePath)) {
+      throw new NotFoundException(
+        `El archivo de imagen para la referencia ${id} no existe físicamente`,
+      );
+    }
+
+    const mimeMap: Record<string, string> = {
+      jpg: 'image/jpeg',
+      jpeg: 'image/jpeg',
+      png: 'image/png',
+      webp: 'image/webp',
+    };
+    const mimeType = mimeMap[referencia.imagenExt] || 'application/octet-stream';
+
+    return { filePath, mimeType };
+  }
+
+  async deleteImagen(id: string): Promise<Referencia> {
+    const referencia = await this.findOne(id);
+    if (referencia.imagenExt) {
+      const uploadsDir = this.configService.get<string>('UPLOADS_DIR', './uploads');
+      const filePath = path.join(
+        uploadsDir,
+        'referencias',
+        `${id}.${referencia.imagenExt}`,
+      );
+      if (fs.existsSync(filePath)) {
+        try {
+          fs.unlinkSync(filePath);
+        } catch (err) {
+          console.error(`Error al borrar archivo: ${filePath}`, err);
+        }
+      }
+      referencia.imagenExt = null;
+      return this.repository.save(referencia);
+    }
+    return referencia;
   }
 }

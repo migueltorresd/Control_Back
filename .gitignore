@@ -21,3 +21,7 @@ lerna-debug.log*
 .env.development
 .env.local
 .env.production
+
+# Uploads
+/uploads
+

@@ -28,4 +28,7 @@ export const envValidationSchema = Joi.object({
   NODE_ENV: Joi.string()
     .valid('development', 'production', 'test')
     .default('development'),
+
+  // Directorio de subidas
+  UPLOADS_DIR: Joi.string().default('./uploads'),
 }).options({ allowUnknown: true }); // permite variables de SO sin romper el arranque
