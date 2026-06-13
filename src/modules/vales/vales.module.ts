@@ -10,6 +10,7 @@ import { ValesService } from './vales.service';
 import { ValesRepository } from './vales.repository';
 import { ProduccionService } from './produccion.service';
 import { ProduccionRepository } from './produccion.repository';
+import { ValePdfService } from './vale-pdf.service';
 import { ReferenciasModule } from '../referencias/referencias.module';
 import { OperariosModule } from '../operarios/operarios.module';
 import { AuditoriaModule } from '../auditoria/auditoria.module';
@@ -27,6 +28,7 @@ import { AuditoriaModule } from '../auditoria/auditoria.module';
     ValesRepository,
     ProduccionService,
     ProduccionRepository,
+    ValePdfService,
   ],
   exports: [
     ValesService,
