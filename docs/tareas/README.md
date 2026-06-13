@@ -57,7 +57,7 @@ Una tarea no se marca ✅ por tener un commit con el nombre correcto — se marc
 | ✅ | 4.1 Logging estructurado | [4.1-logging.md](4.1-logging.md) — commit `706f647` | 4 — Operabilidad |
 | ✅ | 4.2 Auditoría mínima | [4.2-auditoria.md](4.2-auditoria.md) — commit `4499a6b` | 4 |
 | ✅ | 4.3 Swagger | [4.3-swagger.md](4.3-swagger.md) — commit `077b6ce` | 4 |
-| ⬜ | 4.4 Health check | [4.4-health-check.md](4.4-health-check.md) | 4 |
+| ✅ | 4.4 Health check | [4.4-health-check.md](4.4-health-check.md) — commit `6cc7339` | 4 |
 | ⬜ | 4.5 Paginación | [4.5-paginacion.md](4.5-paginacion.md) | 4 |
 | ⬜ | 4.6 Despliegue reproducible | [4.6-despliegue.md](4.6-despliegue.md) | 4 |
 | ⬜ | 5.1 Mappers y tipado estricto | [5.1-mappers-tipado.md](5.1-mappers-tipado.md) | 5 — Pulido |
