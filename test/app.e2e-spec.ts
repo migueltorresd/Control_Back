@@ -290,4 +290,17 @@ describe('Flujo de negocio completo (e2e)', () => {
     expect(res.text).toContain('<html');
     expect(res.text).toContain('swagger-ui');
   });
+
+  it('health check: GET /api/v1/health → responde 200 OK y database status up sin token', async () => {
+    const res = await request(app.getHttpServer())
+      .get('/api/v1/health')
+      .expect(200);
+
+    const body = res.body as {
+      status: string;
+      info: Record<string, { status: string }>;
+    };
+    expect(body.status).toBe('ok');
+    expect(body.info.database.status).toBe('up');
+  });
 });

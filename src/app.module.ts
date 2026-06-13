@@ -22,6 +22,7 @@ import { ValesModule } from './modules/vales/vales.module';
 import { PagosModule } from './modules/pagos/pagos.module';
 import { VentasModule } from './modules/ventas/ventas.module';
 import { AuditoriaModule } from './modules/auditoria/auditoria.module';
+import { HealthModule } from './modules/health/health.module';
 
 @Module({
   imports: [
@@ -53,6 +54,7 @@ import { AuditoriaModule } from './modules/auditoria/auditoria.module';
     PagosModule,
     VentasModule,
     AuditoriaModule,
+    HealthModule,
   ],
   controllers: [],
   providers: [
