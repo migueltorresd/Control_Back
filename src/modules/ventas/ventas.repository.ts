@@ -1,5 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, EntityManager, Repository } from 'typeorm';
+import {
+  Between,
+  DataSource,
+  EntityManager,
+  FindOptionsWhere,
+  LessThanOrEqual,
+  MoreThanOrEqual,
+  Repository,
+} from 'typeorm';
 import { Venta } from './entities/venta.entity';
 
 @Injectable()
@@ -16,6 +24,30 @@ export class VentasRepository extends Repository<Venta> {
         },
       },
       order: { id: 'DESC' },
+    });
+  }
+
+  async findPaginated(opts: {
+    skip: number;
+    take: number;
+    desde?: string;
+    hasta?: string;
+  }): Promise<[Venta[], number]> {
+    const where: FindOptionsWhere<Venta> = {};
+    if (opts.desde && opts.hasta) where.fecha = Between(opts.desde, opts.hasta);
+    else if (opts.desde) where.fecha = MoreThanOrEqual(opts.desde);
+    else if (opts.hasta) where.fecha = LessThanOrEqual(opts.hasta);
+
+    return this.findAndCount({
+      where,
+      relations: {
+        vale: {
+          referencia: true,
+        },
+      },
+      order: { id: 'DESC' },
+      skip: opts.skip,
+      take: opts.take,
     });
   }
 

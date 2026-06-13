@@ -3,6 +3,8 @@ import { Request } from 'express';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { PagosService } from './pagos.service';
 import { PagarLoteDto } from './dto/pagar-lote.dto';
+import { Pago } from './entities/pago.entity';
+import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Rol } from '../auth/enums/rol.enum';
 import { UsuarioAutenticado } from '../auth/jwt.strategy';
@@ -16,10 +18,36 @@ export class PagosController {
 
   @Get()
   @ApiOperation({ summary: 'Obtener historial de pagos de operarios (ADMIN)' })
-  async findAll(@Query('operarioId') operarioId?: string) {
+  async findAll(
+    @Query() query: PaginationQueryDto,
+    @Query('operarioId') operarioId?: string,
+  ) {
+    // Modo paginado opt-in: solo si llegan page/limit/desde/hasta
+    if (query.esPaginado) {
+      const page = query.page ?? 1;
+      const limit = query.limit ?? 50;
+      const { data, total } = await this.pagosService.findAllPaginated({
+        page,
+        limit,
+        operarioId,
+        desde: query.desde,
+        hasta: query.hasta,
+      });
+      return {
+        data: data.map((p) => this.mapToFrontend(p)),
+        total,
+        page,
+        limit,
+      };
+    }
+
+    // Modo legacy: lista completa (usado por las agregaciones del frontend)
     const pagos = await this.pagosService.findAll(operarioId);
-    // Retornamos mapeado con la estructura que el frontend espera
-    return pagos.map((p) => ({
+    return pagos.map((p) => this.mapToFrontend(p));
+  }
+
+  private mapToFrontend(p: Pago) {
+    return {
       id: p.id,
       fecha: p.fecha,
       operarioId: p.operarioId,
@@ -28,7 +56,7 @@ export class PagosController {
       pares: p.pares,
       monto: p.monto,
       ref: p.refId,
-    }));
+    };
   }
 
   @Post('lote')

@@ -23,6 +23,21 @@ export class ValesService {
     return this.repository.findAllWithRelations();
   }
 
+  async findAllPaginated(opts: {
+    page: number;
+    limit: number;
+    desde?: string;
+    hasta?: string;
+  }): Promise<{ data: Vale[]; total: number }> {
+    const [data, total] = await this.repository.findPaginated({
+      skip: (opts.page - 1) * opts.limit,
+      take: opts.limit,
+      desde: opts.desde,
+      hasta: opts.hasta,
+    });
+    return { data, total };
+  }
+
   async findOne(id: string): Promise<Vale> {
     const vale = await this.repository.findByIdWithRelations(id);
     if (!vale) {

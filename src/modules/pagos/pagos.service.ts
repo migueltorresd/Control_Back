@@ -23,6 +23,23 @@ export class PagosService {
     private readonly auditoriaService: AuditoriaService,
   ) {}
 
+  async findAllPaginated(opts: {
+    page: number;
+    limit: number;
+    operarioId?: string;
+    desde?: string;
+    hasta?: string;
+  }): Promise<{ data: Pago[]; total: number }> {
+    const [data, total] = await this.repository.findPaginated({
+      skip: (opts.page - 1) * opts.limit,
+      take: opts.limit,
+      operarioId: opts.operarioId,
+      desde: opts.desde,
+      hasta: opts.hasta,
+    });
+    return { data, total };
+  }
+
   async findAll(operarioId?: string): Promise<Pago[]> {
     if (operarioId) {
       return this.repository.findByOperario(operarioId);

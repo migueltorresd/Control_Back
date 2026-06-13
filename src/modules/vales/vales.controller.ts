@@ -6,9 +6,11 @@ import {
   Delete,
   Body,
   Param,
+  Query,
   Req,
   BadRequestException,
 } from '@nestjs/common';
+import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
 import { Request } from 'express';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { ValesService } from './vales.service';
@@ -34,7 +36,23 @@ export class ValesController {
 
   @Get()
   @ApiOperation({ summary: 'Obtener todos los vales registrados (ADMIN)' })
-  async findAll() {
+  async findAll(@Query() query: PaginationQueryDto) {
+    if (query.esPaginado) {
+      const page = query.page ?? 1;
+      const limit = query.limit ?? 50;
+      const { data, total } = await this.valesService.findAllPaginated({
+        page,
+        limit,
+        desde: query.desde,
+        hasta: query.hasta,
+      });
+      return {
+        data: data.map((v) => this.mapToFrontend(v)),
+        total,
+        page,
+        limit,
+      };
+    }
     const vales = await this.valesService.findAll();
     return vales.map((v) => this.mapToFrontend(v));
   }

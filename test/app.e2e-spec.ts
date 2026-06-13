@@ -303,4 +303,46 @@ describe('Flujo de negocio completo (e2e)', () => {
     expect(body.status).toBe('ok');
     expect(body.info.database.status).toBe('up');
   });
+
+  it('paginación opt-in: GET /vales sin params → array (modo legacy)', async () => {
+    const res = await request(app.getHttpServer())
+      .get('/api/v1/vales')
+      .set(auth())
+      .expect(200);
+    expect(Array.isArray(res.body)).toBe(true);
+  });
+
+  it('paginación opt-in: GET /vales?page=1&limit=5 → envelope con total', async () => {
+    const res = await request(app.getHttpServer())
+      .get('/api/v1/vales?page=1&limit=5')
+      .set(auth())
+      .expect(200);
+    const body = res.body as {
+      data: unknown[];
+      total: number;
+      page: number;
+      limit: number;
+    };
+    expect(Array.isArray(body.data)).toBe(true);
+    expect(body.page).toBe(1);
+    expect(body.limit).toBe(5);
+    expect(body.total).toBeGreaterThanOrEqual(1);
+  });
+
+  it('paginación: GET /vales?limit=999 → 400 (excede el máximo)', () => {
+    return request(app.getHttpServer())
+      .get('/api/v1/vales?limit=999')
+      .set(auth())
+      .expect(400);
+  });
+
+  it('filtro de fecha: GET /pagos?desde&hasta → envelope filtrado', async () => {
+    const res = await request(app.getHttpServer())
+      .get('/api/v1/pagos?desde=2000-01-01&hasta=2000-12-31')
+      .set(auth())
+      .expect(200);
+    const body = res.body as { data: unknown[]; total: number };
+    expect(Array.isArray(body.data)).toBe(true);
+    expect(body.total).toBe(0); // ningún pago en el año 2000
+  });
 });

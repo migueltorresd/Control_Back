@@ -6,6 +6,7 @@ import {
   Delete,
   Body,
   Param,
+  Query,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { VentasService } from './ventas.service';
@@ -14,6 +15,7 @@ import { UpdateVentaDto } from './dto/update-venta.dto';
 import { Venta } from './entities/venta.entity';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Rol } from '../auth/enums/rol.enum';
+import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
 
 @ApiTags('Ventas y Despachos')
 @ApiBearerAuth()
@@ -24,7 +26,23 @@ export class VentasController {
 
   @Get()
   @ApiOperation({ summary: 'Obtener todas las ventas registradas (ADMIN)' })
-  async findAll() {
+  async findAll(@Query() query: PaginationQueryDto) {
+    if (query.esPaginado) {
+      const page = query.page ?? 1;
+      const limit = query.limit ?? 50;
+      const { data, total } = await this.ventasService.findAllPaginated({
+        page,
+        limit,
+        desde: query.desde,
+        hasta: query.hasta,
+      });
+      return {
+        data: data.map((v) => this.mapToFrontend(v)),
+        total,
+        page,
+        limit,
+      };
+    }
     const ventas = await this.ventasService.findAll();
     return ventas.map((v) => this.mapToFrontend(v));
   }
