@@ -17,6 +17,7 @@ import { Pago } from '../modules/pagos/entities/pago.entity';
 import { Tarifa } from '../modules/referencias/entities/tarifa.entity';
 import { RecetaItem } from '../modules/referencias/entities/receta-item.entity';
 import { ValeTalla } from '../modules/vales/entities/vale-talla.entity';
+import { Rechazo } from '../modules/vales/entities/rechazo.entity';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { ValeTalla } from '../modules/vales/entities/vale-talla.entity';
           Vale,
           ValeTalla,
           ProduccionReg,
+          Rechazo,
           Venta,
           Pago,
         ],
