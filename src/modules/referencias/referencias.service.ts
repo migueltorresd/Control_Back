@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  Logger,
+} from '@nestjs/common';
 import * as fs from 'fs';
 import * as path from 'path';
 import { ConfigService } from '@nestjs/config';
@@ -8,6 +13,10 @@ import { CreateReferenciaDto } from './dto/create-referencia.dto';
 import { UpdateReferenciaDto } from './dto/update-referencia.dto';
 import { Referencia } from './entities/referencia.entity';
 import { Material } from '../materiales/entities/material.entity';
+import {
+  MIME_A_EXT,
+  tieneFirmaDeImagen,
+} from '../../common/utils/image-validation.util';
 
 @Injectable()
 export class ReferenciasService {
@@ -104,6 +113,24 @@ export class ReferenciasService {
   ): Promise<Referencia> {
     const referencia = await this.findOne(id);
 
+    // La extensión la decide el SERVIDOR a partir del mimetype validado por el
+    // ParseFilePipe — nunca el nombre del archivo del cliente (que podría ser
+    // ".php", ".svg", etc.). Garantiza que el archivo en disco sea .jpg/.png/.webp.
+    const ext = MIME_A_EXT[file.mimetype];
+    if (!ext) {
+      throw new BadRequestException(
+        'Tipo de imagen no permitido (solo JPG, PNG o WEBP)',
+      );
+    }
+
+    // Verificación de contenido real (magic bytes): el mimetype lo declara el
+    // cliente; esto confirma que el archivo es de verdad la imagen que dice ser.
+    if (!tieneFirmaDeImagen(file.buffer, file.mimetype)) {
+      throw new BadRequestException(
+        'El archivo no es una imagen válida o está dañado',
+      );
+    }
+
     const uploadsDir = this.configService.get<string>(
       'UPLOADS_DIR',
       './uploads',
@@ -112,9 +139,6 @@ export class ReferenciasService {
     if (!fs.existsSync(referenciasDir)) {
       fs.mkdirSync(referenciasDir, { recursive: true });
     }
-
-    const ext =
-      path.extname(file.originalname).substring(1).toLowerCase() || 'jpg';
 
     if (referencia.imagenExt && referencia.imagenExt !== ext) {
       const oldPath = path.join(
