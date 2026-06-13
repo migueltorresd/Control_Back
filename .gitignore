@@ -25,3 +25,6 @@ lerna-debug.log*
 # Uploads
 /uploads
 
+
+# Documentación interna de trabajo (no se versiona)
+/docs
