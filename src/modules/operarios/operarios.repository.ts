@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { DataSource, Repository } from 'typeorm';
 import { Operario } from './entities/operario.entity';
+import { Oficio } from '../../common/enums/oficio.enum';
 
 @Injectable()
 export class OperariosRepository extends Repository<Operario> {
@@ -23,7 +24,7 @@ export class OperariosRepository extends Repository<Operario> {
   async createAndSave(operarioData: {
     id: string;
     nombre: string;
-    oficio: any;
+    oficio: Oficio;
     antiguedad?: number;
   }): Promise<Operario> {
     const newOperario = this.create(operarioData);

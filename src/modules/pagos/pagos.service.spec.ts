@@ -118,7 +118,7 @@ describe('PagosService', () => {
       regEnBd = { ...regAprobado };
       await expect(
         service.pagarLote([
-          { vale: 'V-9999', etapa: 'Cortador', regId: 'reg-1' },
+          { vale: 'V-9999', etapa: Oficio.CORTADOR, regId: 'reg-1' },
         ]),
       ).rejects.toThrow(BadRequestException);
       expect(manager.insert).not.toHaveBeenCalled();
@@ -128,7 +128,7 @@ describe('PagosService', () => {
       regEnBd = { ...regAprobado, estado: EstadoProduccion.REGISTRADO };
       await expect(
         service.pagarLote([
-          { vale: 'V-0001', etapa: 'Cortador', regId: 'reg-1' },
+          { vale: 'V-0001', etapa: Oficio.CORTADOR, regId: 'reg-1' },
         ]),
       ).rejects.toThrow(BadRequestException);
     });
@@ -138,7 +138,7 @@ describe('PagosService', () => {
       valeEnBd = { id: 'V-0001', referenciaId: 'REF-001' };
 
       const pagos = await service.pagarLote([
-        { vale: 'V-0001', etapa: 'Cortador', regId: 'reg-1' },
+        { vale: 'V-0001', etapa: Oficio.CORTADOR, regId: 'reg-1' },
       ]);
 
       expect(pagos).toHaveLength(1);

@@ -72,6 +72,8 @@ describe('ProduccionService', () => {
     estado: EstadoProduccion.REGISTRADO,
     montoPagado: 0,
     vale: { referenciaId: 'REF-001' },
+    revisadoPor: null as string | null,
+    revisadoEn: null as Date | null,
   };
 
   beforeEach(async () => {

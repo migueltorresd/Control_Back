@@ -260,7 +260,7 @@ describe('Flujo de negocio completo (e2e)', () => {
         accion: string;
         entidad: string;
         entidadId: string;
-        detalle: any;
+        detalle: unknown;
       }>;
       total: number;
       page: number;
