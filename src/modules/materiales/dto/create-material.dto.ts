@@ -1,4 +1,11 @@
-import { IsNotEmpty, IsString, IsNumber, IsPositive, IsOptional, IsIn } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsString,
+  IsNumber,
+  IsPositive,
+  IsOptional,
+  IsIn,
+} from 'class-validator';
 
 export class CreateMaterialDto {
   @IsOptional()
@@ -15,7 +22,9 @@ export class CreateMaterialDto {
 
   @IsNotEmpty({ message: 'La unidad de medida es requerida' })
   @IsString({ message: 'La unidad de medida debe ser un texto' })
-  @IsIn(['pie²', 'par', 'kg', 'unidad'], { message: 'La unidad debe ser una de: pie², par, kg, unidad' })
+  @IsIn(['pie²', 'par', 'kg', 'unidad'], {
+    message: 'La unidad debe ser una de: pie², par, kg, unidad',
+  })
   unidad: string;
 
   @IsNotEmpty({ message: 'El precio es requerido' })

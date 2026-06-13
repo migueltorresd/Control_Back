@@ -6,17 +6,9 @@ import { OperariosService } from './operarios.service';
 import { OperariosRepository } from './operarios.repository';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([Operario]),
-  ],
+  imports: [TypeOrmModule.forFeature([Operario])],
   controllers: [OperariosController],
-  providers: [
-    OperariosService,
-    OperariosRepository,
-  ],
-  exports: [
-    OperariosService,
-    OperariosRepository,
-  ],
+  providers: [OperariosService, OperariosRepository],
+  exports: [OperariosService, OperariosRepository],
 })
 export class OperariosModule {}

@@ -5,20 +5,12 @@ import { PagosController } from './pagos.controller';
 import { PagosService } from './pagos.service';
 import { PagosRepository } from './pagos.repository';
 import { ValesModule } from '../vales/vales.module';
+import { AuditoriaModule } from '../auditoria/auditoria.module';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([Pago]),
-    ValesModule,
-  ],
+  imports: [TypeOrmModule.forFeature([Pago]), ValesModule, AuditoriaModule],
   controllers: [PagosController],
-  providers: [
-    PagosService,
-    PagosRepository,
-  ],
-  exports: [
-    PagosService,
-    PagosRepository,
-  ],
+  providers: [PagosService, PagosRepository],
+  exports: [PagosService, PagosRepository],
 })
 export class PagosModule {}

@@ -6,9 +6,7 @@ import { Operario } from './entities/operario.entity';
 
 @Injectable()
 export class OperariosService {
-  constructor(
-    private readonly repository: OperariosRepository,
-  ) {}
+  constructor(private readonly repository: OperariosRepository) {}
 
   async findAll(): Promise<Operario[]> {
     return this.repository.findAllOrderedById();
@@ -41,7 +39,9 @@ export class OperariosService {
 
     const updated = await this.repository.updateOperario(id, dto);
     if (!updated) {
-      throw new NotFoundException(`Operario con ID ${id} no se pudo actualizar`);
+      throw new NotFoundException(
+        `Operario con ID ${id} no se pudo actualizar`,
+      );
     }
     return updated;
   }

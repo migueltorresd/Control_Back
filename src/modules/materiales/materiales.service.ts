@@ -6,9 +6,7 @@ import { Material } from './entities/material.entity';
 
 @Injectable()
 export class MaterialesService {
-  constructor(
-    private readonly repository: MaterialesRepository,
-  ) { }
+  constructor(private readonly repository: MaterialesRepository) {}
 
   async findAll(): Promise<Material[]> {
     return this.repository.findAllOrderedById();
@@ -26,7 +24,7 @@ export class MaterialesService {
     const last = await this.repository.findLast();
     const lastNum = last ? parseInt(last.id.split('-')[1], 10) : 0;
     const nextId = 'MT-' + String(lastNum + 1).padStart(2, '0');
-    
+
     return this.repository.createAndSave({
       id: nextId,
       nombre: dto.nombre,
@@ -42,7 +40,9 @@ export class MaterialesService {
 
     const updated = await this.repository.updateMaterial(id, dto);
     if (!updated) {
-      throw new NotFoundException(`Material con ID ${id} no se pudo actualizar`);
+      throw new NotFoundException(
+        `Material con ID ${id} no se pudo actualizar`,
+      );
     }
     return updated;
   }

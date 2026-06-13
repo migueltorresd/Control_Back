@@ -7,7 +7,10 @@ export class UpdateOperarioDto {
   nombre?: string;
 
   @IsOptional()
-  @IsEnum(Oficio, { message: 'El oficio debe ser un valor válido (Cortador, Guarnecedor, Solador, Finizaje)' })
+  @IsEnum(Oficio, {
+    message:
+      'El oficio debe ser un valor válido (Cortador, Guarnecedor, Solador, Finizaje)',
+  })
   oficio?: Oficio;
 
   @IsOptional()

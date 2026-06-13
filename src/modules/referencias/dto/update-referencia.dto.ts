@@ -1,4 +1,11 @@
-import { IsString, IsNumber, IsOptional, ValidateNested, IsArray, Min } from 'class-validator';
+import {
+  IsString,
+  IsNumber,
+  IsOptional,
+  ValidateNested,
+  IsArray,
+  Min,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { TarifaItemDto, RecetaItemDto } from './create-referencia.dto';
 

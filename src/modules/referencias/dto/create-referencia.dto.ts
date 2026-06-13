@@ -1,10 +1,23 @@
-import { IsNotEmpty, IsString, IsNumber, IsOptional, ValidateNested, IsEnum, Min, IsArray, IsPositive } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsString,
+  IsNumber,
+  IsOptional,
+  ValidateNested,
+  IsEnum,
+  Min,
+  IsArray,
+  IsPositive,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { Oficio } from '../../../common/enums/oficio.enum';
 
 export class TarifaItemDto {
   @IsNotEmpty({ message: 'El oficio es requerido' })
-  @IsEnum(Oficio, { message: 'El oficio debe ser un valor válido (Cortador, Guarnecedor, Solador, Finizaje)' })
+  @IsEnum(Oficio, {
+    message:
+      'El oficio debe ser un valor válido (Cortador, Guarnecedor, Solador, Finizaje)',
+  })
   oficio: Oficio;
 
   @IsNotEmpty({ message: 'El valor de la tarifa es requerido' })

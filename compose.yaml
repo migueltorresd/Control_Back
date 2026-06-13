@@ -1,16 +1,68 @@
+# Stack de producción: db + backend + caddy (reverse proxy con TLS).
+# Desarrollo local: `docker compose up -d db` levanta solo la base de datos
+# (el backend corre en el host con `pnpm start:dev`).
+#
+# Las variables ${...} se leen del archivo .env de este directorio.
+
 services:
   db:
     image: postgres:15-alpine
     container_name: control-produccion-db
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: control_produccion
+      POSTGRES_USER: ${DATABASE_USERNAME}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_DB: ${DATABASE_DATABASE}
+    # Solo loopback del servidor: no se publica a internet, pero permite
+    # administración local y el flujo de desarrollo (backend en el host).
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USERNAME} -d ${DATABASE_DATABASE}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: .
+    container_name: control-produccion-backend
+    env_file: .env
+    environment:
+      # Dentro del compose el backend siempre habla con el servicio db,
+      # sin importar lo que diga DATABASE_HOST en el .env (que usa el host).
+      DATABASE_HOST: db
+    volumes:
+      - uploads:/app/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+    # No publica puerto al host: solo accesible por Caddy en la red interna.
+    expose:
+      - "3001"
+    restart: unless-stopped
+
+  caddy:
+    build:
+      context: ../control-produccion
+    container_name: control-produccion-caddy
+    environment:
+      # localhost (cert autofirmado) en pruebas; el dominio real en producción.
+      CADDY_SITE_ADDRESS: ${CADDY_SITE_ADDRESS:-localhost}
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - backend
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
     restart: unless-stopped
 
 volumes:
   pgdata:
+  uploads:
+  caddy_data:
+  caddy_config:

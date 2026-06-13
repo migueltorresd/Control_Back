@@ -2,7 +2,10 @@ import { IsOptional, IsString, IsDateString, IsObject } from 'class-validator';
 
 export class UpdateValeDto {
   @IsOptional()
-  @IsDateString({}, { message: 'La fecha debe tener un formato válido de fecha (YYYY-MM-DD)' })
+  @IsDateString(
+    {},
+    { message: 'La fecha debe tener un formato válido de fecha (YYYY-MM-DD)' },
+  )
   fecha?: string;
 
   @IsOptional()
@@ -22,6 +25,8 @@ export class UpdateValeDto {
   referenciaId?: string;
 
   @IsOptional()
-  @IsObject({ message: 'Las tallas deben ser un objeto clave-valor (ej. {"38": 5})' })
+  @IsObject({
+    message: 'Las tallas deben ser un objeto clave-valor (ej. {"38": 5})',
+  })
   tallas?: Record<string, number>;
 }

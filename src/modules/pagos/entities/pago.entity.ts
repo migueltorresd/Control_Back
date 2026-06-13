@@ -4,13 +4,14 @@ import { Vale } from '../../vales/entities/vale.entity';
 import { Referencia } from '../../referencias/entities/referencia.entity';
 import { ProduccionReg } from '../../vales/entities/produccion-reg.entity';
 import { decimalTransformer } from '../../../common/transformers/decimal.transformer';
+import { Oficio } from '../../../common/enums/oficio.enum';
 
 @Entity('pagos')
 export class Pago {
   @PrimaryColumn()
   id: string; // ej., PG-123456789
 
-  @Column()
+  @Column({ type: 'date' })
   fecha: string;
 
   @Column()
@@ -27,13 +28,17 @@ export class Pago {
   @JoinColumn({ name: 'valeId' })
   vale: Vale;
 
-  @Column()
-  etapa: string;
+  @Column({ type: 'enum', enum: Oficio })
+  etapa: Oficio;
 
   @Column('int')
   pares: number;
 
-  @Column('decimal', { precision: 12, scale: 2, transformer: decimalTransformer })
+  @Column('decimal', {
+    precision: 12,
+    scale: 2,
+    transformer: decimalTransformer,
+  })
   monto: number;
 
   @Column()

@@ -1,4 +1,10 @@
-import { IsOptional, IsString, IsNumber, IsPositive, IsIn } from 'class-validator';
+import {
+  IsOptional,
+  IsString,
+  IsNumber,
+  IsPositive,
+  IsIn,
+} from 'class-validator';
 
 export class UpdateMaterialDto {
   @IsOptional()
@@ -11,7 +17,9 @@ export class UpdateMaterialDto {
 
   @IsOptional()
   @IsString({ message: 'La unidad de medida debe ser un texto' })
-  @IsIn(['pie²', 'par', 'kg', 'unidad'], { message: 'La unidad debe ser una de: pie², par, kg, unidad' })
+  @IsIn(['pie²', 'par', 'kg', 'unidad'], {
+    message: 'La unidad debe ser una de: pie², par, kg, unidad',
+  })
   unidad?: string;
 
   @IsOptional()

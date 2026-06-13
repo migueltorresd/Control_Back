@@ -1,4 +1,10 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
 import { Vale } from './vale.entity';
 import { Operario } from '../../operarios/entities/operario.entity';
 import { Oficio } from '../../../common/enums/oficio.enum';
@@ -31,7 +37,8 @@ export class ProduccionReg {
   pares: number;
 
   @Column({
-    type: 'varchar',
+    type: 'enum',
+    enum: EstadoProduccion,
     default: EstadoProduccion.REGISTRADO,
   })
   estado: EstadoProduccion;
@@ -43,4 +50,10 @@ export class ProduccionReg {
     transformer: decimalTransformer,
   })
   montoPagado: number;
+
+  @Column({ type: 'varchar', nullable: true })
+  revisadoPor: string | null;
+
+  @Column({ type: 'timestamp', nullable: true })
+  revisadoEn: Date | null;
 }

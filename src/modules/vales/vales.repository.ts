@@ -1,5 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, Repository } from 'typeorm';
+import {
+  Between,
+  DataSource,
+  EntityManager,
+  FindOptionsWhere,
+  LessThanOrEqual,
+  MoreThanOrEqual,
+  Repository,
+} from 'typeorm';
 import { Vale } from './entities/vale.entity';
 import { ValeTalla } from './entities/vale-talla.entity';
 
@@ -11,46 +19,114 @@ export class ValesRepository extends Repository<Vale> {
 
   async findAllWithRelations(): Promise<Vale[]> {
     return this.find({
-      relations: { referencia: true, tallas: true, produccion: { operario: true } },
+      relations: {
+        referencia: true,
+        tallas: true,
+        produccion: { operario: true },
+        rechazos: true,
+      },
       order: { id: 'ASC' },
+    });
+  }
+
+  async findPaginated(opts: {
+    skip: number;
+    take: number;
+    desde?: string;
+    hasta?: string;
+  }): Promise<[Vale[], number]> {
+    const where: FindOptionsWhere<Vale> = {};
+    if (opts.desde && opts.hasta) where.fecha = Between(opts.desde, opts.hasta);
+    else if (opts.desde) where.fecha = MoreThanOrEqual(opts.desde);
+    else if (opts.hasta) where.fecha = LessThanOrEqual(opts.hasta);
+
+    return this.findAndCount({
+      where,
+      relations: {
+        referencia: true,
+        tallas: true,
+        produccion: { operario: true },
+        rechazos: true,
+      },
+      order: { id: 'ASC' },
+      skip: opts.skip,
+      take: opts.take,
     });
   }
 
   async findByIdWithRelations(id: string): Promise<Vale | null> {
     return this.findOne({
       where: { id },
-      relations: { referencia: true, tallas: true, produccion: { operario: true } },
+      relations: {
+        referencia: true,
+        tallas: true,
+        produccion: { operario: true },
+        rechazos: true,
+      },
     });
   }
 
-  async findLast(): Promise<Vale | null> {
-    return this.findOne({ where: {}, order: { id: 'DESC' } });
+  async nextId(manager: EntityManager): Promise<string> {
+    const n = await queryScalar<string>(
+      manager,
+      `SELECT nextval('vales_seq') AS n`,
+      'n',
+    );
+    return 'V-' + String(Number(n)).padStart(4, '0');
   }
 
   async crearConRelaciones(
-    valeData: { id: string; fecha: string; almacen: string; color: string; altura: string; referenciaId: string },
-    tallasData: { talla: number; cantidad: number }[]
+    valeData: {
+      fecha: string;
+      almacen: string;
+      color: string;
+      altura: string;
+      referenciaId: string;
+    },
+    tallasData: { talla: number; cantidad: number }[],
   ): Promise<Vale> {
     return this.dataSource.transaction(async (manager) => {
-      // 1. Guardar el Vale
-      const newVale = manager.create(Vale, valeData);
-      const savedVale = await manager.save(Vale, newVale);
+      // 1. Obtener el siguiente ID de la secuencia (dentro de la transacción)
+      const id = await this.nextId(manager);
 
-      // 2. Guardar las Tallas del vale
+      // 2. Insertar el Vale (insert, no save: ante una colisión de ID debe
+      // fallar ruidosamente, nunca sobrescribir un vale existente)
+      await manager.insert(Vale, { ...valeData, id });
+
+      // 3. Insertar las Tallas del vale
       if (tallasData && tallasData.length > 0) {
-        const tallas = tallasData.map(t => manager.create(ValeTalla, {
-          ...t,
-          vale: savedVale,
-        }));
+        const tallas = tallasData.map((t) =>
+          manager.create(ValeTalla, {
+            ...t,
+            vale: { id } as Vale,
+          }),
+        );
         await manager.save(ValeTalla, tallas);
       }
 
       // Retornar el vale creado con sus relaciones completas
       const result = await manager.findOne(Vale, {
-        where: { id: savedVale.id },
-        relations: { referencia: true, tallas: true, produccion: { operario: true } },
+        where: { id },
+        relations: {
+          referencia: true,
+          tallas: true,
+          produccion: { operario: true },
+          rechazos: true,
+        },
       });
       return result!;
     });
   }
+}
+
+/** Helper tipado para queries escalares de TypeORM (manager.query devuelve any[]) */
+async function queryScalar<T>(
+  manager: EntityManager,
+  sql: string,
+  col: string,
+): Promise<T> {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  const rows = await manager.query(sql);
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+  return rows[0][col] as T;
 }

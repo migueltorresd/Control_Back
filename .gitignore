@@ -2,6 +2,9 @@
 /dist
 /node_modules
 
+# test coverage
+/coverage
+
 # Logs
 logs
 *.log
@@ -18,3 +21,10 @@ lerna-debug.log*
 .env.development
 .env.local
 .env.production
+
+# Uploads
+/uploads
+
+
+# Documentación interna de trabajo (no se versiona)
+/docs

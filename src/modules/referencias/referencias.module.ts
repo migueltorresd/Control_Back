@@ -14,13 +14,7 @@ import { MaterialesModule } from '../materiales/materiales.module';
     MaterialesModule, // Importado para usar el MaterialesService
   ],
   controllers: [ReferenciasController],
-  providers: [
-    ReferenciasService,
-    ReferenciasRepository,
-  ],
-  exports: [
-    ReferenciasService,
-    ReferenciasRepository,
-  ],
+  providers: [ReferenciasService, ReferenciasRepository],
+  exports: [ReferenciasService, ReferenciasRepository],
 })
 export class ReferenciasModule {}

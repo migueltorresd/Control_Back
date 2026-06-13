@@ -12,13 +12,7 @@ import { ValesModule } from '../vales/vales.module';
     ValesModule, // Importa ValesModule para inyectar ValesService
   ],
   controllers: [VentasController],
-  providers: [
-    VentasService,
-    VentasRepository,
-  ],
-  exports: [
-    VentasService,
-    VentasRepository,
-  ],
+  providers: [VentasService, VentasRepository],
+  exports: [VentasService, VentasRepository],
 })
 export class VentasModule {}

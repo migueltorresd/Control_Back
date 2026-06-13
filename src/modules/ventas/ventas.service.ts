@@ -4,6 +4,7 @@ import { ValesService } from '../vales/vales.service';
 import { CreateVentaDto } from './dto/create-venta.dto';
 import { UpdateVentaDto } from './dto/update-venta.dto';
 import { Venta } from './entities/venta.entity';
+import { hoyLocal } from '../../common/utils/fecha.util';
 
 @Injectable()
 export class VentasService {
@@ -14,6 +15,21 @@ export class VentasService {
 
   async findAll(): Promise<Venta[]> {
     return this.repository.findAllWithRelations();
+  }
+
+  async findAllPaginated(opts: {
+    page: number;
+    limit: number;
+    desde?: string;
+    hasta?: string;
+  }): Promise<{ data: Venta[]; total: number }> {
+    const [data, total] = await this.repository.findPaginated({
+      skip: (opts.page - 1) * opts.limit,
+      take: opts.limit,
+      desde: opts.desde,
+      hasta: opts.hasta,
+    });
+    return { data, total };
   }
 
   async findOne(id: string): Promise<Venta> {
@@ -28,33 +44,18 @@ export class VentasService {
     // 1. Validar que el vale exista
     await this.valesService.findOne(dto.valeId);
 
-    // 2. Generar el ID secuencial VT-XXXX
-    const last = await this.repository.findLast();
-    let lastNum = 0;
-    if (last && last.id.startsWith('VT-')) {
-      const parts = last.id.split('-');
-      if (parts.length > 1) {
-        const parsed = parseInt(parts[1], 10);
-        if (!isNaN(parsed)) {
-          lastNum = parsed;
-        }
-      }
-    }
-    const nextId = `VT-${String(lastNum + 1).padStart(4, '0')}`;
+    // 2. Establecer fecha por defecto si no viene
+    const fecha = dto.fecha || hoyLocal();
 
-    // 3. Establecer fecha por defecto si no viene
-    const fecha = dto.fecha || new Date().toISOString().split('T')[0];
-
-    // 4. Crear y guardar
+    // 3. Crear y guardar (el ID lo genera la secuencia ventas_seq)
     const saved = await this.repository.createAndSave({
-      id: nextId,
       valeId: dto.valeId,
       pares: dto.pares,
       precioUnitario: dto.precioUnitario,
       fecha,
     });
 
-    // 5. Retornar la venta completa con sus relaciones cargadas
+    // 4. Retornar la venta completa con sus relaciones cargadas
     return this.findOne(saved.id);
   }
 
@@ -70,7 +71,8 @@ export class VentasService {
     // 3. Actualizar campos
     if (dto.valeId !== undefined) venta.valeId = dto.valeId;
     if (dto.pares !== undefined) venta.pares = dto.pares;
-    if (dto.precioUnitario !== undefined) venta.precioUnitario = dto.precioUnitario;
+    if (dto.precioUnitario !== undefined)
+      venta.precioUnitario = dto.precioUnitario;
     if (dto.fecha !== undefined) venta.fecha = dto.fecha;
 
     await this.repository.save(venta);

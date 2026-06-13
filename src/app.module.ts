@@ -1,51 +1,70 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
-// Modules nuevos
+import { envValidationSchema } from './config/env.validation';
+
+// Autenticación (guards globales fail-closed)
+import { AuthModule } from './modules/auth/auth.module';
+import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
+import { RolesGuard } from './modules/auth/guards/roles.guard';
+
+// Interceptor global
+import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
+
+// Módulos de negocio
 import { MaterialesModule } from './modules/materiales/materiales.module';
 import { ReferenciasModule } from './modules/referencias/referencias.module';
 import { OperariosModule } from './modules/operarios/operarios.module';
 import { ValesModule } from './modules/vales/vales.module';
 import { PagosModule } from './modules/pagos/pagos.module';
 import { VentasModule } from './modules/ventas/ventas.module';
-
-// Entities modularizados (para SeedService)
-import { Material } from './modules/materiales/entities/material.entity';
-import { Referencia } from './modules/referencias/entities/referencia.entity';
-import { Operario } from './modules/operarios/entities/operario.entity';
-import { Vale } from './modules/vales/entities/vale.entity';
-import { ProduccionReg } from './modules/vales/entities/produccion-reg.entity';
-import { Venta } from './modules/ventas/entities/venta.entity';
-import { Pago } from './modules/pagos/entities/pago.entity';
-
-// Services
-import { SeedService } from './services/seed.service';
+import { AuditoriaModule } from './modules/auditoria/auditoria.module';
+import { HealthModule } from './modules/health/health.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: process.env.DATABASE_HOST || 'localhost',
-      port: parseInt(process.env.DATABASE_PORT || '5432'),
-      username: process.env.DATABASE_USERNAME || 'postgres',
-      password: process.env.DATABASE_PASSWORD || 'postgres',
-      database: process.env.DATABASE_DATABASE || 'control_produccion',
-      autoLoadEntities: true, // Carga las entidades registradas en cada módulo automáticamente
-      synchronize: true, // Auto-create schemas in development
+    ConfigModule.forRoot({
+      isGlobal: true,
+      validationSchema: envValidationSchema,
     }),
-    TypeOrmModule.forFeature([Material, Referencia, Operario, Vale, ProduccionReg, Venta, Pago]), // Para uso de SeedService
+    TypeOrmModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        type: 'postgres',
+        host: config.get<string>('DATABASE_HOST'),
+        port: config.get<number>('DATABASE_PORT'),
+        username: config.get<string>('DATABASE_USERNAME'),
+        password: config.get<string>('DATABASE_PASSWORD'),
+        database: config.get<string>('DATABASE_DATABASE'),
+        autoLoadEntities: true,
+        synchronize: false, // NUNCA true — el esquema evoluciona solo por migraciones
+        migrationsRun: false, // Las migraciones se corren manualmente: pnpm migration:run
+      }),
+    }),
+    // Rate limiting global: 100 requests/minuto por IP
+    ThrottlerModule.forRoot([{ ttl: 60000, limit: 100 }]),
+    AuthModule,
     MaterialesModule,
     ReferenciasModule,
     OperariosModule,
     ValesModule,
     PagosModule,
     VentasModule,
+    AuditoriaModule,
+    HealthModule,
   ],
   controllers: [],
   providers: [
-    SeedService,
+    // Rate limiting antes de autenticar (protege también el login)
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
+    // Fail-closed: primero autenticación, luego autorización por rol
+    { provide: APP_GUARD, useClass: JwtAuthGuard },
+    { provide: APP_GUARD, useClass: RolesGuard },
+    // Logger global HTTP
+    { provide: APP_INTERCEPTOR, useClass: LoggingInterceptor },
   ],
 })
 export class AppModule {}
