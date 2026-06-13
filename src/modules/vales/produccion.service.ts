@@ -17,6 +17,7 @@ import { Rechazo } from './entities/rechazo.entity';
 import { Vale } from './entities/vale.entity';
 import { EstadoProduccion } from '../../common/enums/estado-produccion.enum';
 import { AuditoriaService } from '../auditoria/auditoria.service';
+import { hoyLocal } from '../../common/utils/fecha.util';
 
 export interface ResultadoRevision {
   success: boolean;
@@ -317,14 +318,8 @@ export class ProduccionService {
 
       // 2. Si hay rechazados, insertar en rechazos
       if (paresRechazados > 0) {
-        const d = new Date();
-        const year = d.getFullYear();
-        const month = String(d.getMonth() + 1).padStart(2, '0');
-        const day = String(d.getDate()).padStart(2, '0');
-        const localFecha = `${year}-${month}-${day}`;
-
         const rechazo = manager.create(Rechazo, {
-          fecha: localFecha,
+          fecha: hoyLocal(),
           valeId: reg.valeId,
           etapa: reg.etapa,
           operarioId: reg.operarioId,
@@ -388,6 +383,7 @@ export class ProduccionService {
         );
       }
 
+      const estadoAnterior = reg.estado; // capturar antes de mutar (para la auditoría)
       const nuevoMonto = paresAprobados * tarifaObj.valor;
       reg.pares = paresAprobados;
       reg.estado = EstadoProduccion.APROBADO;
@@ -415,7 +411,7 @@ export class ProduccionService {
             paresAprobados,
             paresRechazados,
             montoNuevo: nuevoMonto,
-            estadoAnterior: reg.estado,
+            estadoAnterior,
           },
         },
         manager,

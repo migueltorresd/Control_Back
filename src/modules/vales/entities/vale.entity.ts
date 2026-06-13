@@ -26,8 +26,8 @@ export class Vale {
   @Column()
   color: string;
 
-  @Column()
-  altura: string;
+  @Column({ type: 'varchar', nullable: true })
+  altura: string | null;
 
   @Column()
   referenciaId: string;

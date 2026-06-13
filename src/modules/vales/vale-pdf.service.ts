@@ -109,7 +109,10 @@ export class ValePdfService {
         .fillColor(GRIS)
         .fontSize(9)
         .font('Helvetica-Bold')
-        .text(String(t.talla), x, yTalla + 4, { width: ancho, align: 'center' });
+        .text(String(t.talla), x, yTalla + 4, {
+          width: ancho,
+          align: 'center',
+        });
       doc
         .fillColor('#241E17')
         .fontSize(13)
@@ -159,11 +162,7 @@ export class ValePdfService {
   }
 
   private tituloSeccion(doc: PDFKit.PDFDocument, texto: string): void {
-    doc
-      .fillColor('#241E17')
-      .fontSize(13)
-      .font('Helvetica-Bold')
-      .text(texto);
+    doc.fillColor('#241E17').fontSize(13).font('Helvetica-Bold').text(texto);
     doc.moveDown(0.4);
   }
 
@@ -173,9 +172,14 @@ export class ValePdfService {
       .fillColor(GRIS)
       .fontSize(8)
       .font('Helvetica')
-      .text(`Generado el ${generado} · ${EMPRESA} · Control de Producción`, 48, 800, {
-        align: 'center',
-        width: 499,
-      });
+      .text(
+        `Generado el ${generado} · ${EMPRESA} · Control de Producción`,
+        48,
+        800,
+        {
+          align: 'center',
+          width: 499,
+        },
+      );
   }
 }

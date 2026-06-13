@@ -7,7 +7,7 @@ export interface CreateValeServiceDto {
   fecha: string;
   almacen: string;
   color: string;
-  altura: string;
+  altura?: string | null;
   referenciaId: string;
   tallas: { talla: number; cantidad: number }[];
 }
