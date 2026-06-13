@@ -23,9 +23,11 @@ async function bootstrap() {
   const showSwagger = !isProd || swaggerEnabled;
 
   // Cabeceras de seguridad (desactivamos CSP únicamente si Swagger está activo para que carguen sus estilos/scripts inline)
+  // Permitimos carga de recursos (como imágenes) desde otros orígenes (ej: frontend en puerto 3000)
   app.use(
     helmet({
       contentSecurityPolicy: showSwagger ? false : undefined,
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
     }),
   );
 
