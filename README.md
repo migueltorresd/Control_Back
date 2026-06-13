@@ -74,6 +74,62 @@ Ver `.env.example` para la lista completa. Las variables requeridas son:
 
 La app **no arranca** si alguna variable requerida falta (fail-fast con Joi).
 
+## Despliegue en producción
+
+El stack se levanta con Docker Compose: **PostgreSQL + backend + Caddy** (reverse proxy con HTTPS automático). Caddy es el único servicio expuesto a internet (puertos 80/443); el backend y la BD quedan en la red interna.
+
+### Requisitos previos
+- Un servidor con Docker y Docker Compose.
+- Los **dos repos** clonados como hermanos (Caddy construye el frontend desde `../control-produccion`):
+  ```
+  proyectos/
+  ├── Control_produccion_back/   # este repo (aquí vive compose.yaml)
+  └── control-produccion/        # frontend
+  ```
+- Un **dominio** apuntando al servidor (necesario para el certificado TLS de Let's Encrypt).
+
+### Pasos
+
+```bash
+# 1. Configurar el entorno (credenciales fuertes, dominio real)
+cp .env.example .env
+#   En .env, para producción:
+#     DATABASE_PASSWORD=<contraseña fuerte>
+#     JWT_SECRET=<aleatorio de 48+ chars: node -e "console.log(require('crypto').randomBytes(48).toString('hex'))">
+#     CORS_ORIGIN=https://app.tudominio.com
+#     CADDY_SITE_ADDRESS=app.tudominio.com
+#     NODE_ENV=production
+#     ADMIN_USERNAME / ADMIN_PASSWORD (para crear el admin inicial)
+
+# 2. Construir y levantar el stack
+docker compose up -d --build
+
+# 3. Crear el esquema (migraciones, desde los artefactos compilados)
+docker compose exec backend pnpm migration:run:prod
+
+# 4. Crear el usuario administrador inicial
+docker compose exec backend pnpm create-admin:prod
+
+# 5. Verificar salud
+curl https://app.tudominio.com/api/v1/health     # → {"status":"ok",...}
+```
+
+Caddy obtiene y renueva el certificado TLS automáticamente. Para una **prueba local** del stack, dejar `CADDY_SITE_ADDRESS=localhost` (genera un certificado autofirmado) y usar `curl -k https://localhost/...`.
+
+**Desarrollo** (backend en el host con hot-reload): levantar solo la BD con `docker compose up -d db`.
+
+### Backups de la base de datos
+
+```bash
+# Backup manual
+docker compose exec db pg_dump -U <usuario> <base> > backup-$(date +%F).sql
+
+# Restaurar en una base nueva
+docker compose exec -T db psql -U <usuario> -d <base_nueva> < backup-AAAA-MM-DD.sql
+```
+
+**Recomendación**: backup diario automatizado con `cron` (`pg_dump` a un directorio versionado o almacenamiento externo), reteniendo **14 diarios + 1 mensual**. Probar la restauración periódicamente — un backup no verificado no es un backup.
+
 ## Arquitectura
 
 Monolito modular: `controller → service → repository` por módulo de negocio.

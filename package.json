@@ -22,8 +22,10 @@
     "migration:generate": "pnpm typeorm migration:generate",
     "migration:run": "pnpm typeorm migration:run",
     "migration:revert": "pnpm typeorm migration:revert",
+    "migration:run:prod": "typeorm -d dist/config/data-source.js migration:run",
     "seed": "ts-node -r tsconfig-paths/register src/seed/seed.ts",
-    "create-admin": "ts-node -r tsconfig-paths/register src/seed/create-admin.ts"
+    "create-admin": "ts-node -r tsconfig-paths/register src/seed/create-admin.ts",
+    "create-admin:prod": "node dist/seed/create-admin.js"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
