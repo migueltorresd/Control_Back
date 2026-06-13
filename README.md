@@ -137,15 +137,18 @@ Monolito modular: `controller → service → repository` por módulo de negocio
 ```
 src/
 ├── config/           # Validación de env (Joi), DataSource para CLI
-├── common/           # Filtros globales, guards, interceptors
+├── common/           # Filtros globales, guards, interceptors, utils, transformers
 ├── modules/
+│   ├── auth/         # JWT, roles (ADMIN/OPERARIO), guards fail-closed
 │   ├── materiales/
 │   ├── operarios/
-│   ├── referencias/
-│   ├── vales/        # Core: vales, produccion_registros, vale_tallas
-│   ├── pagos/
-│   └── ventas/
-├── seed/             # Script de datos de demostración (pnpm seed)
+│   ├── referencias/  # Modelos: tarifas por oficio, receta, foto del modelo
+│   ├── vales/        # Core: vales, produccion_registros, rechazos, vale_tallas
+│   ├── pagos/        # Nómina de operarios (no cobros a clientes)
+│   ├── ventas/
+│   ├── auditoria/    # Rastro transaccional de dinero y aprobaciones
+│   └── health/       # Health check (terminus)
+├── seed/             # Scripts: seed de demo y create-admin
 └── migrations/       # Migraciones TypeORM versionadas
 ```
 
@@ -154,3 +157,38 @@ src/
 - Queries: solo en `*.repository.ts`. Prohibido inyectar `Repository<T>` de TypeORM directo en services.
 - Todo input HTTP pasa por DTO con `class-validator`. Las entidades nunca se exponen en respuestas HTTP directamente.
 - Mensajes de error y validación en español.
+
+### Flujo de negocio
+
+```
+Referencia (modelo) ──► Vale (orden de producción: modelo + tallas)
+                              │
+                              ▼
+        Registro de producción por operario y etapa
+        (Cortador → Guarnecedor → Solador → Finizaje)
+                              │
+                              ▼
+        Revisión de calidad (aprobación parcial + rechazos)
+                              │
+                              ▼
+        Pago de mano de obra al operario (monto congelado)
+                              │
+   Vale terminado (Finizaje) ─┴─► Venta del calzado en stock
+```
+
+### Máquina de estados de producción
+
+Cada registro de producción transita por estados controlados; el monto se
+**congela** al aprobar (pares × tarifa del momento) y se paga ese valor:
+
+```
+registrado ──(revisión: aprobar N pares)──► aprobado ──(módulo pagos)──► pagado
+    ▲                                          │  ▲                          │
+    └──────────(deshacer, monto→0)─────────────┘  └──(anular pago)───────────┘
+```
+
+- La aprobación es **solo** vía el endpoint de revisión (`POST .../revision`), no por PATCH directo.
+- `aprobado → pagado` y `pagado → aprobado` solo ocurren dentro de transacciones del módulo de pagos.
+- Las transiciones inválidas se rechazan con 400; los conflictos de concurrencia con 409 (compare-and-set atómico).
+
+> Documentación de trabajo interna (planes de mejora, registros de tareas) en `docs/` — no versionada.
