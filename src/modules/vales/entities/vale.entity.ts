@@ -17,7 +17,7 @@ export class Vale {
   @PrimaryColumn({ name: 'vale' })
   id: string; // Formato secuencial V-XXXX (4 dígitos)
 
-  @Column()
+  @Column({ type: 'date' })
   fecha: string;
 
   @Column()

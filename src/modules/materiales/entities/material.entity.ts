@@ -1,4 +1,5 @@
 import { Entity, Column, PrimaryColumn } from 'typeorm';
+import { decimalTransformer } from '../../../common/transformers/decimal.transformer';
 
 @Entity('materiales')
 export class Material {
@@ -14,6 +15,10 @@ export class Material {
   @Column()
   unidad: string;
 
-  @Column('float')
+  @Column('decimal', {
+    precision: 12,
+    scale: 2,
+    transformer: decimalTransformer,
+  })
   precio: number;
 }

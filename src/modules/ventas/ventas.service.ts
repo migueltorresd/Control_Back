@@ -4,6 +4,7 @@ import { ValesService } from '../vales/vales.service';
 import { CreateVentaDto } from './dto/create-venta.dto';
 import { UpdateVentaDto } from './dto/update-venta.dto';
 import { Venta } from './entities/venta.entity';
+import { hoyLocal } from '../../common/utils/fecha.util';
 
 @Injectable()
 export class VentasService {
@@ -44,7 +45,7 @@ export class VentasService {
     await this.valesService.findOne(dto.valeId);
 
     // 2. Establecer fecha por defecto si no viene
-    const fecha = dto.fecha || new Date().toISOString().split('T')[0];
+    const fecha = dto.fecha || hoyLocal();
 
     // 3. Crear y guardar (el ID lo genera la secuencia ventas_seq)
     const saved = await this.repository.createAndSave({

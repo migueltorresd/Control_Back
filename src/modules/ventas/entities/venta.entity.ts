@@ -7,7 +7,7 @@ export class Venta {
   @PrimaryColumn()
   id: string; // e.g., VT-0001
 
-  @Column()
+  @Column({ type: 'date' })
   fecha: string; // YYYY-MM-DD
 
   @Column()

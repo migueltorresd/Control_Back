@@ -23,6 +23,7 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { Rol } from '../auth/enums/rol.enum';
 import { UsuarioAutenticado } from '../auth/jwt.strategy';
 import { EstadoProduccion } from '../../common/enums/estado-produccion.enum';
+import { hoyLocal } from '../../common/utils/fecha.util';
 
 @ApiTags('Vales y Producción')
 @ApiBearerAuth()
@@ -67,7 +68,7 @@ export class ValesController {
   @Post()
   @ApiOperation({ summary: 'Crear un nuevo vale de producción (ADMIN)' })
   async create(@Body() dto: CreateValeDto) {
-    const fecha = dto.fecha || new Date().toISOString().split('T')[0];
+    const fecha = dto.fecha || hoyLocal();
 
     const tallasArray = Object.entries(dto.tallas).map(([tallaStr, cant]) => ({
       talla: parseInt(tallaStr, 10),

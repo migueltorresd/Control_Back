@@ -12,6 +12,7 @@ import { Oficio } from '../../common/enums/oficio.enum';
 import { ProduccionReg } from '../vales/entities/produccion-reg.entity';
 import { Vale } from '../vales/entities/vale.entity';
 import { AuditoriaService } from '../auditoria/auditoria.service';
+import { hoyLocal } from '../../common/utils/fecha.util';
 
 @Injectable()
 export class PagosService {
@@ -78,7 +79,7 @@ export class PagosService {
         throw new NotFoundException(`Vale con ID ${reg.valeId} no encontrado`);
       }
 
-      const fecha = new Date().toISOString().split('T')[0];
+      const fecha = hoyLocal();
 
       // 4. Generar el ID secuencial del pago
       const pagoId = await this.repository.nextId(manager);
@@ -140,7 +141,7 @@ export class PagosService {
   ): Promise<Pago[]> {
     return this.repository.dataSource.transaction(async (manager) => {
       const pagos: Pago[] = [];
-      const fecha = new Date().toISOString().split('T')[0];
+      const fecha = hoyLocal();
 
       for (const item of items) {
         // 1. Obtener y bloquear cada registro con pessimistic_write (sin join)

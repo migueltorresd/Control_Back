@@ -3,6 +3,7 @@ import {
   IsString,
   IsOptional,
   IsObject,
+  IsDateString,
   Validate,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
@@ -15,7 +16,10 @@ export class CreateValeDto {
     required: false,
   })
   @IsOptional()
-  @IsString({ message: 'La fecha debe ser un texto con formato YYYY-MM-DD' })
+  @IsDateString(
+    {},
+    { message: 'La fecha debe tener formato de fecha válido (YYYY-MM-DD)' },
+  )
   fecha?: string;
 
   @ApiProperty({

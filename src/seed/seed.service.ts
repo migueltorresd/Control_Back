@@ -274,7 +274,7 @@ export class SeedService {
         fecha: '2026-06-02',
         operarioId: 'OP-01',
         valeId: 'V-0001',
-        etapa: 'Cortador',
+        etapa: Oficio.CORTADOR,
         pares: 40,
         monto: 48000,
         refId: 'REF-001',

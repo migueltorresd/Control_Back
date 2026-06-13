@@ -9,6 +9,7 @@ import {
   Repository,
 } from 'typeorm';
 import { Pago } from './entities/pago.entity';
+import { Oficio } from '../../common/enums/oficio.enum';
 
 @Injectable()
 export class PagosRepository extends Repository<Pago> {
@@ -92,7 +93,7 @@ export class PagosRepository extends Repository<Pago> {
       fecha: string;
       operarioId: string;
       valeId: string;
-      etapa: string;
+      etapa: Oficio;
       pares: number;
       monto: number;
       refId: string;
@@ -119,7 +120,7 @@ export class PagosRepository extends Repository<Pago> {
       fecha: string;
       operarioId: string;
       valeId: string;
-      etapa: string;
+      etapa: Oficio;
       pares: number;
       monto: number;
       refId: string;
