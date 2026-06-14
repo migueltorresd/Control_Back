@@ -41,6 +41,7 @@ export class VentasController {
         total,
         page,
         limit,
+        totalPages: Math.ceil(total / limit),
       };
     }
     const ventas = await this.ventasService.findAll();

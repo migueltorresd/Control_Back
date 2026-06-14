@@ -68,6 +68,7 @@ export class ValesController {
         total,
         page,
         limit,
+        totalPages: Math.ceil(total / limit),
       };
     }
     const vales = await this.valesService.findAll();
