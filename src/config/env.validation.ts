@@ -1,13 +1,36 @@
 import * as Joi from 'joi';
 
 export const envValidationSchema = Joi.object({
-  // Base de datos
-  DATABASE_HOST: Joi.string().required(),
-  DATABASE_PORT: Joi.number().integer().positive().required(),
-  DATABASE_USERNAME: Joi.string().required(),
-  DATABASE_PASSWORD: Joi.string().required(),
-  DATABASE_DATABASE: Joi.string().required(),
-  // TLS hacia la BD (Postgres gestionados como Render lo exigen). Default false para local/Docker.
+  // Base de datos.
+  // Opción A (recomendada en Render/Neon): una sola cadena de conexión.
+  DATABASE_URL: Joi.string().uri({ scheme: ['postgres', 'postgresql'] }),
+  // Opción B (Docker/local): variables sueltas. Solo se exigen si NO hay DATABASE_URL.
+  DATABASE_HOST: Joi.string().when('DATABASE_URL', {
+    is: Joi.exist(),
+    then: Joi.optional(),
+    otherwise: Joi.required(),
+  }),
+  DATABASE_PORT: Joi.number().integer().positive().when('DATABASE_URL', {
+    is: Joi.exist(),
+    then: Joi.optional(),
+    otherwise: Joi.required(),
+  }),
+  DATABASE_USERNAME: Joi.string().when('DATABASE_URL', {
+    is: Joi.exist(),
+    then: Joi.optional(),
+    otherwise: Joi.required(),
+  }),
+  DATABASE_PASSWORD: Joi.string().when('DATABASE_URL', {
+    is: Joi.exist(),
+    then: Joi.optional(),
+    otherwise: Joi.required(),
+  }),
+  DATABASE_DATABASE: Joi.string().when('DATABASE_URL', {
+    is: Joi.exist(),
+    then: Joi.optional(),
+    otherwise: Joi.required(),
+  }),
+  // TLS hacia la BD. Opcional: si la DATABASE_URL trae sslmode=require se activa solo.
   DATABASE_SSL: Joi.boolean().default(false),
 
   // Servidor

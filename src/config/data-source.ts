@@ -14,16 +14,26 @@ const esCompilado = __filename.endsWith('.js');
 const base = esCompilado ? 'dist' : 'src';
 const ext = esCompilado ? 'js' : 'ts';
 
+// Si hay DATABASE_URL (p. ej. Neon en Render) se usa esa cadena; si no, las variables sueltas (Docker/local).
+const url = process.env.DATABASE_URL;
+// TLS: explícito con DATABASE_SSL=true, o automático si la URI trae sslmode=require.
+const ssl =
+  process.env.DATABASE_SSL === 'true' || url?.includes('sslmode=require')
+    ? { rejectUnauthorized: false }
+    : false;
+
 export const AppDataSource = new DataSource({
   type: 'postgres',
-  host: process.env.DATABASE_HOST,
-  port: Number(process.env.DATABASE_PORT),
-  username: process.env.DATABASE_USERNAME,
-  password: process.env.DATABASE_PASSWORD,
-  database: process.env.DATABASE_DATABASE,
-  // Render (y otros Postgres gestionados) exigen TLS. Se activa con DATABASE_SSL=true.
-  ssl:
-    process.env.DATABASE_SSL === 'true' ? { rejectUnauthorized: false } : false,
+  ...(url
+    ? { url }
+    : {
+        host: process.env.DATABASE_HOST,
+        port: Number(process.env.DATABASE_PORT),
+        username: process.env.DATABASE_USERNAME,
+        password: process.env.DATABASE_PASSWORD,
+        database: process.env.DATABASE_DATABASE,
+      }),
+  ssl,
   entities: [`${base}/**/*.entity.${ext}`],
   migrations: [`${base}/migrations/*.${ext}`],
   synchronize: false,

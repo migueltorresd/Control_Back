@@ -32,21 +32,32 @@ import { HealthModule } from './modules/health/health.module';
     }),
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        type: 'postgres',
-        host: config.get<string>('DATABASE_HOST'),
-        port: config.get<number>('DATABASE_PORT'),
-        username: config.get<string>('DATABASE_USERNAME'),
-        password: config.get<string>('DATABASE_PASSWORD'),
-        database: config.get<string>('DATABASE_DATABASE'),
-        // Render (y otros Postgres gestionados) exigen TLS. Se activa con DATABASE_SSL=true.
-        ssl: config.get<boolean>('DATABASE_SSL')
-          ? { rejectUnauthorized: false }
-          : false,
-        autoLoadEntities: true,
-        synchronize: false, // NUNCA true — el esquema evoluciona solo por migraciones
-        migrationsRun: false, // Las migraciones se corren manualmente: pnpm migration:run
-      }),
+      useFactory: (config: ConfigService) => {
+        // Si hay DATABASE_URL (p. ej. Neon en Render) se usa esa cadena; si no, las variables sueltas (Docker/local).
+        const url = config.get<string>('DATABASE_URL');
+        // TLS: explícito con DATABASE_SSL=true, o automático si la URI trae sslmode=require.
+        const ssl =
+          config.get<boolean>('DATABASE_SSL') ||
+          url?.includes('sslmode=require')
+            ? { rejectUnauthorized: false }
+            : false;
+        return {
+          type: 'postgres',
+          ...(url
+            ? { url }
+            : {
+                host: config.get<string>('DATABASE_HOST'),
+                port: config.get<number>('DATABASE_PORT'),
+                username: config.get<string>('DATABASE_USERNAME'),
+                password: config.get<string>('DATABASE_PASSWORD'),
+                database: config.get<string>('DATABASE_DATABASE'),
+              }),
+          ssl,
+          autoLoadEntities: true,
+          synchronize: false, // NUNCA true — el esquema evoluciona solo por migraciones
+          migrationsRun: false, // Las migraciones se corren manualmente: pnpm migration:run
+        };
+      },
     }),
     // Rate limiting global: 100 requests/minuto por IP
     ThrottlerModule.forRoot([{ ttl: 60000, limit: 100 }]),
