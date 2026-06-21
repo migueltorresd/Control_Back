@@ -301,7 +301,10 @@ export class ValePdfService {
     titulo: string,
     derecha?: string,
   ): number {
-    doc.rect(LEFT, y + 1, 3, 11).fillColor(ACENTO).fill();
+    doc
+      .rect(LEFT, y + 1, 3, 11)
+      .fillColor(ACENTO)
+      .fill();
     doc
       .fillColor(TINTA)
       .font('Helvetica-Bold')
