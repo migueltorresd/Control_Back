@@ -39,6 +39,10 @@ import { HealthModule } from './modules/health/health.module';
         username: config.get<string>('DATABASE_USERNAME'),
         password: config.get<string>('DATABASE_PASSWORD'),
         database: config.get<string>('DATABASE_DATABASE'),
+        // Render (y otros Postgres gestionados) exigen TLS. Se activa con DATABASE_SSL=true.
+        ssl: config.get<boolean>('DATABASE_SSL')
+          ? { rejectUnauthorized: false }
+          : false,
         autoLoadEntities: true,
         synchronize: false, // NUNCA true — el esquema evoluciona solo por migraciones
         migrationsRun: false, // Las migraciones se corren manualmente: pnpm migration:run

@@ -21,6 +21,9 @@ export const AppDataSource = new DataSource({
   username: process.env.DATABASE_USERNAME,
   password: process.env.DATABASE_PASSWORD,
   database: process.env.DATABASE_DATABASE,
+  // Render (y otros Postgres gestionados) exigen TLS. Se activa con DATABASE_SSL=true.
+  ssl:
+    process.env.DATABASE_SSL === 'true' ? { rejectUnauthorized: false } : false,
   entities: [`${base}/**/*.entity.${ext}`],
   migrations: [`${base}/migrations/*.${ext}`],
   synchronize: false,

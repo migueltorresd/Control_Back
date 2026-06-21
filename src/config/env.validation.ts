@@ -7,6 +7,8 @@ export const envValidationSchema = Joi.object({
   DATABASE_USERNAME: Joi.string().required(),
   DATABASE_PASSWORD: Joi.string().required(),
   DATABASE_DATABASE: Joi.string().required(),
+  // TLS hacia la BD (Postgres gestionados como Render lo exigen). Default false para local/Docker.
+  DATABASE_SSL: Joi.boolean().default(false),
 
   // Servidor
   PORT: Joi.number().integer().positive().default(3001),
