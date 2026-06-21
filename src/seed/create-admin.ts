@@ -56,16 +56,29 @@ class CreateAdminService {
     }),
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        type: 'postgres',
-        host: config.get<string>('DATABASE_HOST'),
-        port: config.get<number>('DATABASE_PORT'),
-        username: config.get<string>('DATABASE_USERNAME'),
-        password: config.get<string>('DATABASE_PASSWORD'),
-        database: config.get<string>('DATABASE_DATABASE'),
-        entities: [Usuario, Operario],
-        synchronize: false,
-      }),
+      useFactory: (config: ConfigService) => {
+        const url = config.get<string>('DATABASE_URL');
+        const ssl =
+          config.get<boolean>('DATABASE_SSL') ||
+          url?.includes('sslmode=require')
+            ? { rejectUnauthorized: false }
+            : false;
+        return {
+          type: 'postgres' as const,
+          ...(url
+            ? { url }
+            : {
+                host: config.get<string>('DATABASE_HOST'),
+                port: config.get<number>('DATABASE_PORT'),
+                username: config.get<string>('DATABASE_USERNAME'),
+                password: config.get<string>('DATABASE_PASSWORD'),
+                database: config.get<string>('DATABASE_DATABASE'),
+              }),
+          ssl,
+          entities: [Usuario, Operario],
+          synchronize: false,
+        };
+      },
     }),
     TypeOrmModule.forFeature([Usuario]),
   ],

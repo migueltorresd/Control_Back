@@ -27,28 +27,41 @@ import { Rechazo } from '../modules/vales/entities/rechazo.entity';
     }),
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        type: 'postgres',
-        host: config.get<string>('DATABASE_HOST'),
-        port: config.get<number>('DATABASE_PORT'),
-        username: config.get<string>('DATABASE_USERNAME'),
-        password: config.get<string>('DATABASE_PASSWORD'),
-        database: config.get<string>('DATABASE_DATABASE'),
-        entities: [
-          Material,
-          Referencia,
-          Tarifa,
-          RecetaItem,
-          Operario,
-          Vale,
-          ValeTalla,
-          ProduccionReg,
-          Rechazo,
-          Venta,
-          Pago,
-        ],
-        synchronize: false,
-      }),
+      useFactory: (config: ConfigService) => {
+        const url = config.get<string>('DATABASE_URL');
+        const ssl =
+          config.get<boolean>('DATABASE_SSL') ||
+          url?.includes('sslmode=require')
+            ? { rejectUnauthorized: false }
+            : false;
+        return {
+          type: 'postgres' as const,
+          ...(url
+            ? { url }
+            : {
+                host: config.get<string>('DATABASE_HOST'),
+                port: config.get<number>('DATABASE_PORT'),
+                username: config.get<string>('DATABASE_USERNAME'),
+                password: config.get<string>('DATABASE_PASSWORD'),
+                database: config.get<string>('DATABASE_DATABASE'),
+              }),
+          ssl,
+          entities: [
+            Material,
+            Referencia,
+            Tarifa,
+            RecetaItem,
+            Operario,
+            Vale,
+            ValeTalla,
+            ProduccionReg,
+            Rechazo,
+            Venta,
+            Pago,
+          ],
+          synchronize: false,
+        };
+      },
     }),
     TypeOrmModule.forFeature([
       Material,
