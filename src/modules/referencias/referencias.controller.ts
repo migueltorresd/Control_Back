@@ -81,7 +81,10 @@ export class ReferenciasController {
   }
 
   @Post(':id/imagen')
-  @UseInterceptors(FileInterceptor('imagen'))
+  // limits corta el archivo en streaming si supera 5 MB, sin cargarlo entero a memoria
+  @UseInterceptors(
+    FileInterceptor('imagen', { limits: { fileSize: 1024 * 1024 * 5 } }),
+  )
   @ApiOperation({ summary: 'Subir una imagen para la referencia (ADMIN)' })
   async uploadImagen(
     @Param('id') id: string,

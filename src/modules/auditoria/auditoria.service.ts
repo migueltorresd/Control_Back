@@ -27,6 +27,7 @@ export class AuditoriaService {
     total: number;
     page: number;
     limit: number;
+    totalPages: number;
   }> {
     const page = Math.max(1, Number(query.page) || 1);
     const limit = Math.max(1, Math.min(100, Number(query.limit) || 20));
@@ -51,6 +52,7 @@ export class AuditoriaService {
       total,
       page,
       limit,
+      totalPages: Math.ceil(total / limit),
     };
   }
 }

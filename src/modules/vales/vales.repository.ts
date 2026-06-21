@@ -80,7 +80,7 @@ export class ValesRepository extends Repository<Vale> {
       fecha: string;
       almacen: string;
       color: string;
-      altura: string;
+      altura?: string | null;
       referenciaId: string;
     },
     tallasData: { talla: number; cantidad: number }[],

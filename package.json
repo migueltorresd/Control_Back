@@ -5,6 +5,7 @@
   "author": "Miguel Angel Torres Diaz",
   "private": true,
   "license": "UNLICENSED",
+  "packageManager": "pnpm@10.28.0",
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
@@ -45,6 +46,7 @@
     "joi": "^18.2.1",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
+    "pdfkit": "^0.19.1",
     "pg": "^8.21.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
@@ -62,6 +64,7 @@
     "@types/multer": "^2.1.0",
     "@types/node": "^22.10.7",
     "@types/passport-jwt": "^4.0.1",
+    "@types/pdfkit": "^0.17.6",
     "@types/supertest": "^6.0.2",
     "eslint": "^10.5.0",
     "eslint-config-prettier": "^10.0.1",

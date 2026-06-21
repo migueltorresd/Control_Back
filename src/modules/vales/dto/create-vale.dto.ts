@@ -35,10 +35,14 @@ export class CreateValeDto {
   @IsString({ message: 'El color debe ser un texto' })
   color: string;
 
-  @ApiProperty({ description: 'Altura del calzado', example: 'Media' })
-  @IsNotEmpty({ message: 'La altura es requerida' })
+  @ApiProperty({
+    description: 'Altura del calzado',
+    example: 'Media',
+    required: false,
+  })
+  @IsOptional()
   @IsString({ message: 'La altura debe ser un texto' })
-  altura: string;
+  altura?: string;
 
   @ApiProperty({
     description: 'ID de la referencia / modelo del calzado',

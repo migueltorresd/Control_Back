@@ -8,13 +8,15 @@ import {
   Param,
   Query,
   Req,
+  Res,
   BadRequestException,
 } from '@nestjs/common';
 import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
-import { Request } from 'express';
+import type { Request, Response } from 'express';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { ValesService } from './vales.service';
 import { ProduccionService, ResultadoRevision } from './produccion.service';
+import { ValePdfService } from './vale-pdf.service';
 import { CreateValeDto } from './dto/create-vale.dto';
 import { RegisterProduccionDto } from './dto/register-produccion.dto';
 import { UpdateProduccionEstadoDto } from './dto/update-produccion-estado.dto';
@@ -33,7 +35,21 @@ export class ValesController {
   constructor(
     private readonly valesService: ValesService,
     private readonly produccionService: ProduccionService,
+    private readonly valePdfService: ValePdfService,
   ) {}
+
+  @Get(':id/pdf')
+  @ApiOperation({ summary: 'Descargar el vale de producción en PDF (ADMIN)' })
+  async descargarPdf(@Param('id') id: string, @Res() res: Response) {
+    const vale = await this.valesService.findOne(id);
+    const pdf = await this.valePdfService.generar(vale);
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="vale-${vale.id}.pdf"`,
+      'Content-Length': pdf.length,
+    });
+    res.end(pdf);
+  }
 
   @Get()
   @ApiOperation({ summary: 'Obtener todos los vales registrados (ADMIN)' })
@@ -52,6 +68,7 @@ export class ValesController {
         total,
         page,
         limit,
+        totalPages: Math.ceil(total / limit),
       };
     }
     const vales = await this.valesService.findAll();
@@ -261,7 +278,7 @@ interface ValeRaw {
   almacen: string;
   referenciaId: string;
   color: string;
-  altura: string;
+  altura: string | null;
   tallas: TallaRaw[];
   produccion: ProduccionRegRaw[];
   rechazos: RechazoRaw[];
