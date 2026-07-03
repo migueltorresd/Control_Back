@@ -7,9 +7,24 @@ import { AddImagenExt1781264800698 } from '../../src/migrations/1781264800698-Ad
 import { AddRechazo1781268064383 } from '../../src/migrations/1781268064383-AddRechazo';
 import { AddAuditoria1781304983552 } from '../../src/migrations/1781304983552-AddAuditoria';
 import { DomainConsistency1781353676977 } from '../../src/migrations/1781353676977-DomainConsistency';
+import { AlturaValeNullable1781371822097 } from '../../src/migrations/1781371822097-AlturaValeNullable';
+import { AddReferenciaImagenes1782950400000 } from '../../src/migrations/1782950400000-AddReferenciaImagenes';
 
 /** Base de datos dedicada para e2e — nunca la de desarrollo. */
 export const TEST_DB = 'control_produccion_test';
+
+/**
+ * URL de la BD de test armada con las mismas variables sueltas que usa este
+ * módulo. El e2e la fuerza en DATABASE_URL para que la app bajo prueba JAMÁS
+ * use una URL del entorno (que podría apuntar a la base de producción).
+ */
+export function urlBaseDeDatosDeTest(): string {
+  const user = encodeURIComponent(process.env.DATABASE_USERNAME ?? '');
+  const pass = encodeURIComponent(process.env.DATABASE_PASSWORD ?? '');
+  const host = process.env.DATABASE_HOST ?? 'localhost';
+  const port = process.env.DATABASE_PORT ?? '5432';
+  return `postgresql://${user}:${pass}@${host}:${port}/${TEST_DB}`;
+}
 
 const conexionBase = {
   type: 'postgres' as const,
@@ -50,6 +65,8 @@ export async function prepararBaseDeDatosDeTest(): Promise<void> {
       AddRechazo1781268064383,
       AddAuditoria1781304983552,
       DomainConsistency1781353676977,
+      AlturaValeNullable1781371822097,
+      AddReferenciaImagenes1782950400000,
     ],
   });
   await ds.initialize();

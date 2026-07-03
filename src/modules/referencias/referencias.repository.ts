@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { DataSource, Repository } from 'typeorm';
 import { Referencia } from './entities/referencia.entity';
+import { ReferenciaImagen } from './entities/referencia-imagen.entity';
 import { Tarifa } from './entities/tarifa.entity';
 import { RecetaItem } from './entities/receta-item.entity';
 import { Material } from '../materiales/entities/material.entity';
@@ -120,6 +121,49 @@ export class ReferenciasRepository extends Repository<Referencia> {
         where: { id },
         relations: { tarifas: true, receta: { material: true } },
       });
+    });
+  }
+
+  /**
+   * Guarda (o reemplaza) el binario de la imagen y actualiza `imagenExt` en la
+   * misma transacción, para que el flag del catálogo nunca quede desfasado del
+   * binario real.
+   */
+  async guardarImagen(
+    id: string,
+    ext: string,
+    datos: Buffer,
+  ): Promise<Referencia> {
+    return this.dataSource.transaction(async (manager) => {
+      await manager.getRepository(ReferenciaImagen).save({
+        referenciaId: id,
+        datos,
+        actualizadoEn: new Date(),
+      });
+      await manager.update(Referencia, id, { imagenExt: ext });
+      const result = await manager.findOne(Referencia, {
+        where: { id },
+        relations: { tarifas: true, receta: { material: true } },
+      });
+      return result!;
+    });
+  }
+
+  async obtenerImagen(id: string): Promise<ReferenciaImagen | null> {
+    return this.dataSource
+      .getRepository(ReferenciaImagen)
+      .findOneBy({ referenciaId: id });
+  }
+
+  async borrarImagen(id: string): Promise<Referencia> {
+    return this.dataSource.transaction(async (manager) => {
+      await manager.delete(ReferenciaImagen, { referenciaId: id });
+      await manager.update(Referencia, id, { imagenExt: null });
+      const result = await manager.findOne(Referencia, {
+        where: { id },
+        relations: { tarifas: true, receta: { material: true } },
+      });
+      return result!;
     });
   }
 }

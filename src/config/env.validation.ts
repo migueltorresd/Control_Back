@@ -57,9 +57,6 @@ export const envValidationSchema = Joi.object({
   // Zona horaria del negocio (para fechar pagos/ventas en hora local)
   BUSINESS_TZ: Joi.string().default('America/Bogota'),
 
-  // Directorio de subidas
-  UPLOADS_DIR: Joi.string().default('./uploads'),
-
   // Swagger
   SWAGGER_ENABLED: Joi.boolean().default(false),
 }).options({ allowUnknown: true }); // permite variables de SO sin romper el arranque

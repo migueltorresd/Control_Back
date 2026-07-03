@@ -1,7 +1,14 @@
 // Apuntar a la BD de test ANTES de que ConfigModule lea el entorno
-import { prepararBaseDeDatosDeTest, TEST_DB } from './utils/test-db';
+import {
+  prepararBaseDeDatosDeTest,
+  urlBaseDeDatosDeTest,
+  TEST_DB,
+} from './utils/test-db';
 
 process.env.DATABASE_DATABASE = TEST_DB;
+// La app prefiere DATABASE_URL sobre las variables sueltas: se sobreescribe
+// con la de test para que el e2e nunca corra contra una BD del entorno/.env.
+process.env.DATABASE_URL = urlBaseDeDatosDeTest();
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
@@ -344,5 +351,63 @@ describe('Flujo de negocio completo (e2e)', () => {
     const body = res.body as { data: unknown[]; total: number };
     expect(Array.isArray(body.data)).toBe(true);
     expect(body.total).toBe(0); // ningún pago en el año 2000
+  });
+
+  // --- Imagen del modelo (persistida en la BD, no en disco) ---
+
+  const PNG_E2E = Buffer.concat([
+    Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+    Buffer.alloc(16),
+  ]);
+
+  it('imagen: contenido que no es imagen → 400 aunque declare mimetype válido', () => {
+    return request(app.getHttpServer())
+      .post('/api/v1/referencias/REF-001/imagen')
+      .set(auth())
+      .attach('imagen', Buffer.from('<?php echo "malicioso"; ?>'), {
+        filename: 'foto.png',
+        contentType: 'image/png',
+      })
+      .expect(400);
+  });
+
+  it('imagen: subir PNG → tieneImagen true con extensión decidida por el servidor', async () => {
+    const res = await request(app.getHttpServer())
+      .post('/api/v1/referencias/REF-001/imagen')
+      .set(auth())
+      .attach('imagen', PNG_E2E, {
+        filename: 'nombre-enganoso.php',
+        contentType: 'image/png',
+      })
+      .expect(201);
+    const body = res.body as { tieneImagen: boolean; imagenExt: string };
+    expect(body.tieneImagen).toBe(true);
+    expect(body.imagenExt).toBe('png');
+  });
+
+  it('imagen: GET público devuelve el binario desde la BD con ETag', async () => {
+    const res = await request(app.getHttpServer())
+      .get('/api/v1/referencias/REF-001/imagen')
+      .expect(200);
+    expect(res.headers['content-type']).toBe('image/png');
+    expect(res.headers.etag).toBeDefined();
+    expect(Buffer.compare(res.body as Buffer, PNG_E2E)).toBe(0);
+
+    // Revalidación: mismo ETag → 304 sin volver a bajar el binario
+    await request(app.getHttpServer())
+      .get('/api/v1/referencias/REF-001/imagen')
+      .set('If-None-Match', res.headers.etag)
+      .expect(304);
+  });
+
+  it('imagen: DELETE limpia flag y binario → GET posterior 404', async () => {
+    await request(app.getHttpServer())
+      .delete('/api/v1/referencias/REF-001/imagen')
+      .set(auth())
+      .expect(200);
+
+    await request(app.getHttpServer())
+      .get('/api/v1/referencias/REF-001/imagen')
+      .expect(404);
   });
 });

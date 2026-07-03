@@ -12,10 +12,10 @@ import {
   FileValidator,
   StreamableFile,
   Res,
+  Req,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
-import { createReadStream } from 'fs';
 import { ReferenciasService } from './referencias.service';
 import { Referencia } from './entities/referencia.entity';
 import { CreateReferenciaDto } from './dto/create-referencia.dto';
@@ -114,16 +114,25 @@ export class ReferenciasController {
   })
   async getImagen(
     @Param('id') id: string,
+    @Req() req: import('express').Request,
     @Res({ passthrough: true }) res: import('express').Response,
   ) {
-    const { filePath, mimeType } =
-      await this.referenciasService.getImagenPathAndMime(id);
-    const fileStream = createReadStream(filePath);
+    const { datos, mimeType, actualizadoEn } =
+      await this.referenciasService.getImagen(id);
+
+    // ETag por fecha de actualización: si la imagen no cambió, el navegador
+    // revalida con un 304 sin volver a descargar el binario.
+    const etag = `"${actualizadoEn.getTime()}"`;
     res.set({
-      'Content-Type': mimeType,
-      'Cache-Control': 'public, max-age=86400',
+      'Cache-Control': 'public, max-age=300',
+      ETag: etag,
     });
-    return new StreamableFile(fileStream);
+    if (req.headers['if-none-match'] === etag) {
+      res.status(304);
+      return;
+    }
+    res.set({ 'Content-Type': mimeType });
+    return new StreamableFile(datos);
   }
 
   @Delete(':id/imagen')

@@ -18,9 +18,6 @@ RUN pnpm install --frozen-lockfile --prod
 
 COPY --from=build /app/dist ./dist
 
-# Directorio de fotos de modelos, escribible por el usuario node (volumen en compose)
-RUN mkdir -p /app/uploads && chown -R node:node /app/uploads
-
 USER node
 EXPOSE 3001
 CMD ["node", "dist/main"]

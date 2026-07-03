@@ -67,7 +67,6 @@ jobs:
       CORS_ORIGIN: http://localhost:3000
       JWT_SECRET: ci_test_secret_32_chars_minimum_ok
       JWT_EXPIRES_IN: 8h
-      UPLOADS_DIR: ./uploads
 
     steps:
       - uses: actions/checkout@v7

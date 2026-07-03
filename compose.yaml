@@ -34,8 +34,6 @@ services:
       # Dentro del compose el backend siempre habla con el servicio db,
       # sin importar lo que diga DATABASE_HOST en el .env (que usa el host).
       DATABASE_HOST: db
-    volumes:
-      - uploads:/app/uploads
     depends_on:
       db:
         condition: service_healthy
@@ -63,6 +61,5 @@ services:
 
 volumes:
   pgdata:
-  uploads:
   caddy_data:
   caddy_config:

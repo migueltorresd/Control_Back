@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Referencia } from './entities/referencia.entity';
+import { ReferenciaImagen } from './entities/referencia-imagen.entity';
 import { Tarifa } from './entities/tarifa.entity';
 import { RecetaItem } from './entities/receta-item.entity';
 import { ReferenciasController } from './referencias.controller';
@@ -10,7 +11,12 @@ import { MaterialesModule } from '../materiales/materiales.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Referencia, Tarifa, RecetaItem]),
+    TypeOrmModule.forFeature([
+      Referencia,
+      ReferenciaImagen,
+      Tarifa,
+      RecetaItem,
+    ]),
     MaterialesModule, // Importado para usar el MaterialesService
   ],
   controllers: [ReferenciasController],
