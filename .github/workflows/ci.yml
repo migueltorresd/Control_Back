@@ -17,7 +17,7 @@ jobs:
       # pnpm toma la versión del campo packageManager de package.json
       - uses: pnpm/action-setup@v6
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: pnpm
@@ -74,7 +74,7 @@ jobs:
       # pnpm toma la versión del campo packageManager de package.json
       - uses: pnpm/action-setup@v6
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: pnpm
