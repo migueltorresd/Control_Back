@@ -25,6 +25,9 @@ lerna-debug.log*
 # Uploads
 /uploads
 
+# Backups de BD (contienen datos del cliente — jamás al repo)
+backup-prod-*.sql
+
 
 # Documentación interna de trabajo (no se versiona)
 /docs

@@ -14,6 +14,12 @@ async function bootstrap() {
   });
   const configService = app.get(ConfigService);
 
+  // Detrás de un reverse proxy (Render, Caddy) la IP real del cliente llega
+  // en X-Forwarded-For. Sin esto, el rate limiting por IP ve la IP del proxy
+  // para TODOS los clientes: el límite de login se comparte y un atacante
+  // puede bloquear el acceso a los usuarios legítimos. Se confía en un salto.
+  app.set('trust proxy', 1);
+
   // API versionada: todo cuelga de /api/v1
   app.setGlobalPrefix('api/v1');
 

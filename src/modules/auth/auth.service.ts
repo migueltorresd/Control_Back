@@ -49,6 +49,7 @@ export class AuthService {
       username: usuario.username,
       rol: usuario.rol,
       operarioId: usuario.operarioId,
+      tokenVersion: usuario.tokenVersion,
     };
 
     return {
@@ -78,8 +79,12 @@ export class AuthService {
     AuthService.validarPoliticaPassword(passwordNueva, usuario.username);
 
     const passwordHash = await bcrypt.hash(passwordNueva, BCRYPT_ROUNDS);
-    await this.repository.updatePassword(usuario.id, passwordHash);
-    this.logger.log(`Contraseña actualizada para "${usuario.username}"`);
+    // Revoca todas las sesiones activas (incluida la actual): tras cambiar la
+    // contraseña hay que volver a iniciar sesión.
+    await this.repository.updatePasswordAndRevoke(usuario.id, passwordHash);
+    this.logger.log(
+      `Contraseña actualizada y sesiones revocadas para "${usuario.username}"`,
+    );
   }
 
   /** Política compartida con el script create-admin. */

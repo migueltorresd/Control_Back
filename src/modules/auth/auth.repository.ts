@@ -16,7 +16,20 @@ export class AuthRepository extends Repository<Usuario> {
     return this.findOne({ where: { id, activo: true } });
   }
 
-  async updatePassword(id: string, passwordHash: string): Promise<void> {
-    await this.update({ id }, { passwordHash });
+  /**
+   * Cambia la contraseña e incrementa la versión de sesión en la misma
+   * operación: todos los tokens emitidos antes quedan revocados.
+   */
+  async updatePasswordAndRevoke(
+    id: string,
+    passwordHash: string,
+  ): Promise<void> {
+    await this.update(
+      { id },
+      {
+        passwordHash,
+        tokenVersion: () => '"tokenVersion" + 1',
+      },
+    );
   }
 }
