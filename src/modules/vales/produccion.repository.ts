@@ -5,6 +5,12 @@ import { Vale } from './entities/vale.entity';
 import { Oficio } from '../../common/enums/oficio.enum';
 import { EstadoProduccion } from '../../common/enums/estado-produccion.enum';
 
+/** Resultado del cierre de una asignación (ver `cargarParesAtomico`). */
+export type ResultadoCargaPares =
+  | { ok: true; reg: ProduccionReg }
+  | { ok: false; motivo: 'cupo'; paresYaRegistrados: number }
+  | { ok: false; motivo: 'conflicto' };
+
 @Injectable()
 export class ProduccionRepository extends Repository<ProduccionReg> {
   constructor(public readonly dataSource: DataSource) {
@@ -75,6 +81,101 @@ export class ProduccionRepository extends Repository<ProduccionReg> {
       const saved = await manager.save(ProduccionReg, newReg);
       return { reg: saved, paresYaRegistrados };
     });
+  }
+
+  /**
+   * Crea una asignación: se sabe quién hace la etapa, todavía no cuántos pares.
+   * No valida cupo porque no reserva pares (`pares` queda en NULL y el SUM del
+   * cupo ignora los nulos). Retorna null si ese operario ya estaba asignado a
+   * la misma etapa del vale, para no duplicar por doble clic.
+   */
+  async crearAsignacionAtomica(data: {
+    valeId: string;
+    etapa: Oficio;
+    operarioId: string;
+  }): Promise<ProduccionReg | null> {
+    return this.dataSource.transaction(async (manager) => {
+      // Mismo lock que la registración normal: serializa contra requests concurrentes
+      await manager.findOne(Vale, {
+        where: { id: data.valeId },
+        lock: { mode: 'pessimistic_write' },
+      });
+
+      const yaAsignado = await manager.findOne(ProduccionReg, {
+        where: {
+          valeId: data.valeId,
+          etapa: data.etapa,
+          operarioId: data.operarioId,
+          estado: EstadoProduccion.ASIGNADO,
+        },
+      });
+      if (yaAsignado) return null;
+
+      const nueva = manager.create(ProduccionReg, {
+        valeId: data.valeId,
+        etapa: data.etapa,
+        operarioId: data.operarioId,
+        pares: null,
+        estado: EstadoProduccion.ASIGNADO,
+        montoPagado: 0,
+      });
+      return manager.save(ProduccionReg, nueva);
+    });
+  }
+
+  /**
+   * Cierra una asignación cargándole los pares. Valida el cupo dentro del mismo
+   * lock del vale, igual que la registración directa, y pasa a REGISTRADO.
+   */
+  async cargarParesAtomico(
+    data: {
+      regId: string;
+      valeId: string;
+      etapa: Oficio;
+      pares: number;
+      totalParesVale: number;
+    },
+    manager?: EntityManager,
+  ): Promise<ResultadoCargaPares> {
+    const ejecutar = async (
+      manager: EntityManager,
+    ): Promise<ResultadoCargaPares> => {
+      await manager.findOne(Vale, {
+        where: { id: data.valeId },
+        lock: { mode: 'pessimistic_write' },
+      });
+
+      const result = (await manager
+        .createQueryBuilder(ProduccionReg, 'reg')
+        .select('SUM(reg.pares)', 'sum')
+        .where('reg.valeId = :valeId', { valeId: data.valeId })
+        .andWhere('reg.etapa = :etapa', { etapa: data.etapa })
+        .getRawOne()) as { sum: string | null };
+      const paresYaRegistrados = parseInt(result.sum ?? '0', 10);
+
+      if (paresYaRegistrados + data.pares > data.totalParesVale) {
+        return { ok: false, motivo: 'cupo', paresYaRegistrados };
+      }
+
+      // UPDATE condicionado al estado: si otro request ya la cerró, no pisa nada
+      const actualizado = await manager.update(
+        ProduccionReg,
+        { id: data.regId, estado: EstadoProduccion.ASIGNADO },
+        { pares: data.pares, estado: EstadoProduccion.REGISTRADO },
+      );
+      if ((actualizado.affected ?? 0) !== 1) {
+        return { ok: false, motivo: 'conflicto' };
+      }
+
+      const reg = (await manager.findOne(ProduccionReg, {
+        where: { id: data.regId },
+      })) as ProduccionReg;
+      return { ok: true, reg };
+    };
+
+    return manager
+      ? ejecutar(manager)
+      : this.dataSource.transaction((mgr) => ejecutar(mgr));
   }
 
   /**

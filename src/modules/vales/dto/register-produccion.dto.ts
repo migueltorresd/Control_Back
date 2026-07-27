@@ -4,8 +4,9 @@ import {
   IsEnum,
   IsInt,
   IsPositive,
+  IsOptional,
 } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Oficio } from '../../../common/enums/oficio.enum';
 
 export class RegisterProduccionDto {
@@ -29,9 +30,14 @@ export class RegisterProduccionDto {
   @IsString({ message: 'El ID del operario debe ser un texto' })
   operarioId: string;
 
-  @ApiProperty({ description: 'Cantidad de pares producidos', example: 4 })
-  @IsNotEmpty({ message: 'La cantidad de pares es requerida' })
+  @ApiPropertyOptional({
+    description:
+      'Cantidad de pares producidos. Si se omite, el registro queda solo ASIGNADO: ' +
+      'no consume cupo del vale y no puede aprobarse ni pagarse hasta cargar la cantidad.',
+    example: 4,
+  })
+  @IsOptional()
   @IsInt({ message: 'La cantidad de pares debe ser un número entero' })
   @IsPositive({ message: 'La cantidad de pares debe ser mayor a 0' })
-  pares: number;
+  pares?: number;
 }

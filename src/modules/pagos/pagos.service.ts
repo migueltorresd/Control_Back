@@ -70,6 +70,13 @@ export class PagosService {
         );
       }
 
+      // Un aprobado siempre tiene pares; se verifica igual porque de acá sale plata.
+      if (reg.pares === null) {
+        throw new BadRequestException(
+          `El registro de producción ${regId} no tiene pares cargados; no se puede pagar.`,
+        );
+      }
+
       // 3. Obtener el vale por separado para tener referenciaId
       const vale = await manager.findOne(Vale, {
         where: { id: reg.valeId },
@@ -166,6 +173,13 @@ export class PagosService {
         if (reg.estado !== EstadoProduccion.APROBADO) {
           throw new BadRequestException(
             `El registro ${item.regId} no está aprobado para pago. Estado: ${reg.estado}`,
+          );
+        }
+
+        // Un aprobado siempre tiene pares; se verifica igual porque de acá sale plata.
+        if (reg.pares === null) {
+          throw new BadRequestException(
+            `El registro ${item.regId} no tiene pares cargados; no se puede pagar.`,
           );
         }
 

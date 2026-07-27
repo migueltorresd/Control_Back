@@ -33,8 +33,12 @@ export class ProduccionReg {
   @JoinColumn({ name: 'operarioId' })
   operario: Operario;
 
-  @Column('int')
-  pares: number;
+  /**
+   * Null mientras el registro sea solo una asignación (estado ASIGNADO): se
+   * sabe quién hace la etapa pero todavía no cuántos pares hizo.
+   */
+  @Column({ type: 'int', nullable: true })
+  pares: number | null;
 
   @Column({
     type: 'enum',

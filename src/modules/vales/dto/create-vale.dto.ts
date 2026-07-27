@@ -53,6 +53,15 @@ export class CreateValeDto {
   ref: string;
 
   @ApiProperty({
+    description: 'ID del administrativo que autoriza / da de alta el vale',
+    example: 'ADM-01',
+    required: false,
+  })
+  @IsOptional()
+  @IsString({ message: 'El ID del administrativo debe ser un texto' })
+  creadoPorId?: string;
+
+  @ApiProperty({
     description: 'Objeto clave-valor con cantidad de calzado por talla',
     example: { '40': 4, '41': 10 },
   })

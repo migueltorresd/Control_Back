@@ -5,8 +5,10 @@ import {
   ManyToOne,
   JoinColumn,
   OneToMany,
+  CreateDateColumn,
 } from 'typeorm';
 import { Referencia } from '../../referencias/entities/referencia.entity';
+import { Administrativo } from '../../administrativos/entities/administrativo.entity';
 import { ValeTalla } from './vale-talla.entity';
 import { ProduccionReg } from './produccion-reg.entity';
 import { Rechazo } from './rechazo.entity';
@@ -19,6 +21,16 @@ export class Vale {
 
   @Column({ type: 'date' })
   fecha: string;
+
+  /**
+   * Instante exacto del alta. `fecha` es solo el día (type 'date'), así que la
+   * hora no existía en el sistema: esta columna la agrega.
+   *
+   * Nullable porque los vales anteriores a la columna no tienen hora que
+   * recuperar — poner la de la migración sería inventar un dato.
+   */
+  @CreateDateColumn({ type: 'timestamptz', nullable: true })
+  creadoEn: Date | null;
 
   @Column()
   almacen: string;
@@ -35,6 +47,21 @@ export class Vale {
   @ManyToOne(() => Referencia, { onDelete: 'RESTRICT' })
   @JoinColumn({ name: 'referenciaId' })
   referencia: Referencia;
+
+  /**
+   * Administrativo que dio de alta y autoriza el vale.
+   *
+   * Nullable porque los vales anteriores a esta tabla no tienen a quién
+   * atribuirse. Cuando el área administrativa tenga login propio, este campo
+   * pasará a llenarse solo desde el usuario autenticado en vez de elegirse a
+   * mano en un selector.
+   */
+  @Column({ type: 'varchar', nullable: true })
+  creadoPorId: string | null;
+
+  @ManyToOne(() => Administrativo, { onDelete: 'RESTRICT', nullable: true })
+  @JoinColumn({ name: 'creadoPorId' })
+  creadoPor: Administrativo | null;
 
   @OneToMany(() => ValeTalla, (vt) => vt.vale, {
     cascade: true,

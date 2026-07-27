@@ -18,6 +18,7 @@ import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { MaterialesModule } from './modules/materiales/materiales.module';
 import { ReferenciasModule } from './modules/referencias/referencias.module';
 import { OperariosModule } from './modules/operarios/operarios.module';
+import { AdministrativosModule } from './modules/administrativos/administrativos.module';
 import { ValesModule } from './modules/vales/vales.module';
 import { PagosModule } from './modules/pagos/pagos.module';
 import { VentasModule } from './modules/ventas/ventas.module';
@@ -65,6 +66,7 @@ import { HealthModule } from './modules/health/health.module';
     MaterialesModule,
     ReferenciasModule,
     OperariosModule,
+    AdministrativosModule,
     ValesModule,
     PagosModule,
     VentasModule,

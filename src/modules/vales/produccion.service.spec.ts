@@ -27,6 +27,8 @@ describe('ProduccionService', () => {
   const repository = {
     findById: jest.fn(),
     registrarProduccionAtomico: jest.fn(),
+    crearAsignacionAtomica: jest.fn(),
+    cargarParesAtomico: jest.fn(),
     updateEstadoAtomico: jest.fn(),
     removeReg: jest.fn(),
     dataSource: {
@@ -74,6 +76,13 @@ describe('ProduccionService', () => {
     vale: { referenciaId: 'REF-001' },
     revisadoPor: null as string | null,
     revisadoEn: null as Date | null,
+  };
+
+  /** Registro que solo dice quién hace la etapa: sin pares y sin plata. */
+  const asignacionBase = {
+    ...regBase,
+    pares: null as number | null,
+    estado: EstadoProduccion.ASIGNADO,
   };
 
   beforeEach(async () => {
@@ -509,6 +518,166 @@ describe('ProduccionService', () => {
           'admin-user',
         ),
       ).rejects.toThrow(BadRequestException);
+    });
+
+    it('registro solo asignado (sin pares) → 400', async () => {
+      mockManager.findOne.mockResolvedValue(asignacionBase);
+
+      await expect(
+        service.revisar('V-0001', 'reg-1', dtoAprobacionTotal, 'admin-user'),
+      ).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  describe('asignación sin pares (se sabe quién, todavía no cuántos)', () => {
+    beforeEach(() => {
+      valesService.findOne.mockResolvedValue(vale);
+      operariosService.findOne.mockResolvedValue({ id: 'OP-01' });
+    });
+
+    it('registrar sin pares crea la asignación y NO consume cupo', async () => {
+      repository.crearAsignacionAtomica.mockResolvedValue(asignacionBase);
+      repository.findById.mockResolvedValue(asignacionBase);
+
+      const reg = await service.registerProduccion('V-0001', {
+        etapa: Oficio.CORTADOR,
+        operarioId: 'OP-01',
+      });
+
+      expect(reg.estado).toBe(EstadoProduccion.ASIGNADO);
+      expect(reg.pares).toBeNull();
+      // La clave: no pasa por la validación de cupo, así la etapa sigue libre
+      expect(repository.registrarProduccionAtomico).not.toHaveBeenCalled();
+    });
+
+    it('asignar dos veces el mismo operario a la misma etapa → 409', async () => {
+      repository.crearAsignacionAtomica.mockResolvedValue(null);
+
+      await expect(
+        service.registerProduccion('V-0001', {
+          etapa: Oficio.CORTADOR,
+          operarioId: 'OP-01',
+        }),
+      ).rejects.toThrow(ConflictException);
+    });
+
+    it('registrar CON pares sigue el camino normal y valida cupo', async () => {
+      repository.registrarProduccionAtomico.mockResolvedValue({
+        reg: regBase,
+        paresYaRegistrados: 0,
+      });
+      repository.findById.mockResolvedValue(regBase);
+
+      await service.registerProduccion('V-0001', {
+        etapa: Oficio.CORTADOR,
+        operarioId: 'OP-01',
+        pares: 10,
+      });
+
+      expect(repository.registrarProduccionAtomico).toHaveBeenCalled();
+      expect(repository.crearAsignacionAtomica).not.toHaveBeenCalled();
+    });
+
+    // El mensaje se afirma a propósito: sin la guarda explícita estas
+    // transiciones igual caerían en el "transición inválida" genérico y el test
+    // pasaría por el motivo equivocado, sin decirle al usuario qué hacer.
+    it('una asignación NO puede aprobarse: sin pares no hay plata', async () => {
+      repository.findById.mockResolvedValue(asignacionBase);
+
+      await expect(
+        service.updateEstado('V-0001', 'reg-1', EstadoProduccion.APROBADO),
+      ).rejects.toThrow(/Cargue primero cuántos pares hizo/);
+      expect(repository.updateEstadoAtomico).not.toHaveBeenCalled();
+    });
+
+    it('una asignación NO puede pasar a pagada directo', async () => {
+      repository.findById.mockResolvedValue(asignacionBase);
+
+      await expect(
+        service.updateEstado(
+          'V-0001',
+          'reg-1',
+          EstadoProduccion.PAGADO,
+          manager,
+        ),
+      ).rejects.toThrow(/Cargue primero cuántos pares hizo/);
+      expect(repository.updateEstadoAtomico).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('cargarPares — cierre de la asignación', () => {
+    beforeEach(() => {
+      valesService.findOne.mockResolvedValue(vale);
+    });
+
+    it('carga los pares, pasa a REGISTRADO y deja auditoría', async () => {
+      const cerrado = {
+        ...asignacionBase,
+        pares: 12,
+        estado: EstadoProduccion.REGISTRADO,
+      };
+      repository.findById
+        .mockResolvedValueOnce(asignacionBase)
+        .mockResolvedValueOnce(cerrado);
+      repository.cargarParesAtomico.mockResolvedValue({
+        ok: true,
+        reg: cerrado,
+      });
+
+      const reg = await service.cargarPares('V-0001', 'reg-1', 12, 'admin');
+
+      expect(reg.estado).toBe(EstadoProduccion.REGISTRADO);
+      expect(reg.pares).toBe(12);
+      expect(auditoriaService.registrar).toHaveBeenCalledWith(
+        expect.objectContaining({ accion: 'CARGAR_PARES' }),
+        mockManager,
+      );
+    });
+
+    it('sobre un registro que ya tiene pares → 400', async () => {
+      repository.findById.mockResolvedValue(regBase);
+
+      await expect(
+        service.cargarPares('V-0001', 'reg-1', 5, 'admin'),
+      ).rejects.toThrow(BadRequestException);
+      expect(repository.cargarParesAtomico).not.toHaveBeenCalled();
+    });
+
+    it('por encima del cupo → 400 con cifras', async () => {
+      repository.findById.mockResolvedValue(asignacionBase);
+      repository.cargarParesAtomico.mockResolvedValue({
+        ok: false,
+        motivo: 'cupo',
+        paresYaRegistrados: 18,
+      });
+
+      await expect(
+        service.cargarPares('V-0001', 'reg-1', 5, 'admin'),
+      ).rejects.toThrow(/Cupo superado/);
+      expect(auditoriaService.registrar).not.toHaveBeenCalled();
+    });
+
+    it('otra operación la cerró primero → 409', async () => {
+      repository.findById.mockResolvedValue(asignacionBase);
+      repository.cargarParesAtomico.mockResolvedValue({
+        ok: false,
+        motivo: 'conflicto',
+      });
+
+      await expect(
+        service.cargarPares('V-0001', 'reg-1', 5, 'admin'),
+      ).rejects.toThrow(ConflictException);
+    });
+
+    it('registro de otro vale → 404', async () => {
+      repository.findById.mockResolvedValue({
+        ...asignacionBase,
+        valeId: 'V-0009',
+      });
+
+      await expect(
+        service.cargarPares('V-0001', 'reg-1', 5, 'admin'),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 });
