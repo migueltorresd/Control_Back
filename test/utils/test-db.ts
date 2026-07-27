@@ -9,6 +9,7 @@ import { AddAuditoria1781304983552 } from '../../src/migrations/1781304983552-Ad
 import { DomainConsistency1781353676977 } from '../../src/migrations/1781353676977-DomainConsistency';
 import { AlturaValeNullable1781371822097 } from '../../src/migrations/1781371822097-AlturaValeNullable';
 import { AddReferenciaImagenes1782950400000 } from '../../src/migrations/1782950400000-AddReferenciaImagenes';
+import { AddTokenVersion1783150000000 } from '../../src/migrations/1783150000000-AddTokenVersion';
 
 /** Base de datos dedicada para e2e — nunca la de desarrollo. */
 export const TEST_DB = 'control_produccion_test';
@@ -67,6 +68,7 @@ export async function prepararBaseDeDatosDeTest(): Promise<void> {
       DomainConsistency1781353676977,
       AlturaValeNullable1781371822097,
       AddReferenciaImagenes1782950400000,
+      AddTokenVersion1783150000000,
     ],
   });
   await ds.initialize();

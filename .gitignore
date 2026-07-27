@@ -25,7 +25,8 @@ lerna-debug.log*
 # Uploads
 /uploads
 
-# Volcados de base de datos: llevan datos reales de producción y no van al repo
+# Volcados y backups de BD: llevan datos reales del cliente, jamás al repo.
+# El patrón cubre también los backup-prod-*.sql.
 *.sql
 *.dump
 

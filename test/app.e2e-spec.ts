@@ -410,4 +410,41 @@ describe('Flujo de negocio completo (e2e)', () => {
       .get('/api/v1/referencias/REF-001/imagen')
       .expect(404);
   });
+
+  // --- Revocación de sesiones (al final: mata el token compartido del suite) ---
+
+  const ADMIN_PASS_NUEVA = 'NuevaClaveSegura2026';
+
+  it('revocación: cambiar contraseña → el token viejo muere aunque no expiró', async () => {
+    // El token funciona antes del cambio
+    await request(app.getHttpServer())
+      .get('/api/v1/vales')
+      .set(auth())
+      .expect(200);
+
+    await request(app.getHttpServer())
+      .patch('/api/v1/auth/password')
+      .set(auth())
+      .send({ passwordActual: ADMIN_PASS, passwordNueva: ADMIN_PASS_NUEVA })
+      .expect(200);
+
+    // El mismo token (firmado y sin expirar) ahora es rechazado
+    await request(app.getHttpServer())
+      .get('/api/v1/vales')
+      .set(auth())
+      .expect(401);
+  });
+
+  it('revocación: re-login con la contraseña nueva → token nuevo funciona', async () => {
+    const res = await request(app.getHttpServer())
+      .post('/api/v1/auth/login')
+      .send({ username: ADMIN_USER, password: ADMIN_PASS_NUEVA })
+      .expect(200);
+    token = (res.body as LoginBody).accessToken;
+
+    await request(app.getHttpServer())
+      .get('/api/v1/vales')
+      .set(auth())
+      .expect(200);
+  });
 });

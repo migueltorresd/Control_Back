@@ -32,4 +32,10 @@ export class Usuario {
 
   @Column({ default: true })
   activo: boolean;
+
+  // Versión de sesión: viaja dentro del JWT y se compara contra la BD en cada
+  // request. Incrementarla (p. ej. al cambiar la contraseña) invalida al
+  // instante todos los tokens emitidos antes.
+  @Column({ default: 0 })
+  tokenVersion: number;
 }
