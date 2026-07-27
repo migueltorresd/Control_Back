@@ -1,8 +1,9 @@
 import { Test } from '@nestjs/testing';
-import { NotFoundException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { ValesService } from './vales.service';
 import { ValesRepository } from './vales.repository';
 import { ReferenciasService } from '../referencias/referencias.service';
+import { AdministrativosService } from '../administrativos/administrativos.service';
 
 describe('ValesService', () => {
   let service: ValesService;
@@ -11,8 +12,10 @@ describe('ValesService', () => {
     findAllWithRelations: jest.fn(),
     findByIdWithRelations: jest.fn(),
     crearConRelaciones: jest.fn(),
+    update: jest.fn(),
   };
   const referenciasService = { findOne: jest.fn() };
+  const administrativosService = { assertSeleccionable: jest.fn() };
 
   beforeEach(async () => {
     jest.resetAllMocks();
@@ -21,6 +24,10 @@ describe('ValesService', () => {
         ValesService,
         { provide: ValesRepository, useValue: repository },
         { provide: ReferenciasService, useValue: referenciasService },
+        {
+          provide: AdministrativosService,
+          useValue: administrativosService,
+        },
       ],
     }).compile();
     service = module.get(ValesService);
@@ -65,5 +72,58 @@ describe('ValesService', () => {
       [{ talla: 40, cantidad: 5 }],
     );
     expect(result.id).toBe('V-0003');
+  });
+
+  it('create con administrativo inactivo → 400 y no crea nada', async () => {
+    referenciasService.findOne.mockResolvedValue({ id: 'REF-001' });
+    administrativosService.assertSeleccionable.mockRejectedValue(
+      new BadRequestException(),
+    );
+
+    await expect(
+      service.create({
+        fecha: '2026-06-11',
+        almacen: 'Principal',
+        color: 'Negro',
+        altura: 'Media',
+        referenciaId: 'REF-001',
+        creadoPorId: 'ADM-01',
+        tallas: [{ talla: 40, cantidad: 5 }],
+      }),
+    ).rejects.toThrow(BadRequestException);
+    expect(repository.crearConRelaciones).not.toHaveBeenCalled();
+  });
+
+  it('create sin responsable guarda creadoPorId en null', async () => {
+    referenciasService.findOne.mockResolvedValue({ id: 'REF-001' });
+    repository.crearConRelaciones.mockResolvedValue({ id: 'V-0003' });
+
+    await service.create({
+      fecha: '2026-06-11',
+      almacen: 'Principal',
+      color: 'Negro',
+      altura: 'Media',
+      referenciaId: 'REF-001',
+      tallas: [{ talla: 40, cantidad: 5 }],
+    });
+
+    expect(administrativosService.assertSeleccionable).not.toHaveBeenCalled();
+    expect(repository.crearConRelaciones).toHaveBeenCalledWith(
+      expect.objectContaining({ creadoPorId: null }),
+      [{ talla: 40, cantidad: 5 }],
+    );
+  });
+
+  it('asignarResponsable valida el vale y el administrativo antes de guardar', async () => {
+    repository.findByIdWithRelations.mockResolvedValue({ id: 'V-0004' });
+
+    await service.asignarResponsable('V-0004', 'ADM-02');
+
+    expect(administrativosService.assertSeleccionable).toHaveBeenCalledWith(
+      'ADM-02',
+    );
+    expect(repository.update).toHaveBeenCalledWith('V-0004', {
+      creadoPorId: 'ADM-02',
+    });
   });
 });

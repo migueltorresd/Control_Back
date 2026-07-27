@@ -25,6 +25,9 @@ lerna-debug.log*
 # Uploads
 /uploads
 
+# Volcados de base de datos: llevan datos reales de producción y no van al repo
+*.sql
+*.dump
 
 # Documentación interna de trabajo (no se versiona)
 /docs

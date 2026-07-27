@@ -13,6 +13,7 @@ import { ProduccionRepository } from './produccion.repository';
 import { ValePdfService } from './vale-pdf.service';
 import { ReferenciasModule } from '../referencias/referencias.module';
 import { OperariosModule } from '../operarios/operarios.module';
+import { AdministrativosModule } from '../administrativos/administrativos.module';
 import { AuditoriaModule } from '../auditoria/auditoria.module';
 
 @Module({
@@ -20,6 +21,7 @@ import { AuditoriaModule } from '../auditoria/auditoria.module';
     TypeOrmModule.forFeature([Vale, ValeTalla, ProduccionReg, Rechazo]),
     ReferenciasModule,
     OperariosModule,
+    AdministrativosModule,
     AuditoriaModule,
   ],
   controllers: [ValesController, RechazosController],

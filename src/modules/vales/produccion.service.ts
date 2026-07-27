@@ -58,6 +58,22 @@ export class ProduccionService {
     // 2. Validar que el operario exista
     await this.operariosService.findOne(dto.operarioId);
 
+    // 2b. Sin pares es una asignación: solo se registra QUIÉN hace la etapa.
+    // La cantidad se carga al cierre de semana con `cargarPares`.
+    if (dto.pares === undefined || dto.pares === null) {
+      const asignacion = await this.repository.crearAsignacionAtomica({
+        valeId,
+        etapa: dto.etapa,
+        operarioId: dto.operarioId,
+      });
+      if (!asignacion) {
+        throw new ConflictException(
+          `El operario ${dto.operarioId} ya está asignado a la etapa ${dto.etapa} de este vale.`,
+        );
+      }
+      return this.repository.findById(asignacion.id) as Promise<ProduccionReg>;
+    }
+
     // 3. Calcular el cupo total del vale (no cambia durante la operación)
     const totalParesVale = vale.tallas.reduce((acc, t) => acc + t.cantidad, 0);
 
@@ -79,6 +95,75 @@ export class ProduccionService {
 
     // 5. Recargar con relaciones completas para la respuesta
     return this.repository.findById(reg.id) as Promise<ProduccionReg>;
+  }
+
+  /**
+   * Cierre de una asignación: carga cuántos pares hizo el operario y la pasa a
+   * REGISTRADO, que es cuando recién entra al circuito de revisión y pago.
+   */
+  async cargarPares(
+    valeId: string,
+    regId: string,
+    pares: number,
+    username?: string,
+  ): Promise<ProduccionReg> {
+    const reg = await this.repository.findById(regId);
+    if (!reg || reg.valeId !== valeId) {
+      throw new NotFoundException(
+        `Registro de producción con ID ${regId} no pertenece al vale ${valeId}`,
+      );
+    }
+    if (reg.estado !== EstadoProduccion.ASIGNADO) {
+      throw new BadRequestException(
+        `El registro ya tiene ${reg.pares} pares cargados (estado ${reg.estado}). ` +
+          `Para corregir la cantidad use la revisión de calidad.`,
+      );
+    }
+
+    const vale = await this.valesService.findOne(valeId);
+    const totalParesVale = vale.tallas.reduce((acc, t) => acc + t.cantidad, 0);
+
+    // Carga y auditoría en la misma transacción: si algo falla, no queda ni el
+    // UPDATE ni un rastro a medias.
+    await this.repository.dataSource.transaction(async (mgr) => {
+      const resultado = await this.repository.cargarParesAtomico(
+        { regId, valeId, etapa: reg.etapa, pares, totalParesVale },
+        mgr,
+      );
+
+      if (!resultado.ok && resultado.motivo === 'cupo') {
+        throw new BadRequestException(
+          `Cupo superado en la etapa ${reg.etapa}. Se intentan cargar ${pares} pares, pero ya hay ${resultado.paresYaRegistrados} de un límite de ${totalParesVale} pares en el vale.`,
+        );
+      }
+      if (!resultado.ok) {
+        throw new ConflictException(
+          'El registro fue modificado por otra operación. Recargue e intente de nuevo.',
+        );
+      }
+
+      await this.auditoriaService.registrar(
+        {
+          usuario: username || 'system',
+          accion: 'CARGAR_PARES',
+          entidad: 'ProduccionReg',
+          entidadId: regId,
+          detalle: {
+            valeId,
+            etapa: reg.etapa,
+            operarioId: reg.operarioId,
+            pares,
+          },
+        },
+        mgr,
+      );
+    });
+
+    this.logger.log(
+      `Asignación cerrada: registro ${regId} del vale ${valeId} (etapa: ${reg.etapa}, operario: ${reg.operarioId}) quedó con ${pares} pares por el usuario ${username || 'system'}.`,
+    );
+
+    return this.repository.findById(regId) as Promise<ProduccionReg>;
   }
 
   async updateEstado(
@@ -104,6 +189,14 @@ export class ProduccionService {
         return reg;
       }
 
+      // Una asignación no tiene cantidad: no puede aprobarse ni pagarse. Se
+      // cierra con `cargarPares`, nunca cambiando el estado a mano.
+      if (estadoActual === EstadoProduccion.ASIGNADO) {
+        throw new BadRequestException(
+          `El registro solo tiene el operario asignado. Cargue primero cuántos pares hizo antes de cambiar su estado.`,
+        );
+      }
+
       let nuevoMonto = reg.montoPagado;
 
       // 2. Validar la máquina de estados y aplicar lógica
@@ -120,6 +213,14 @@ export class ProduccionService {
         if (!tarifaObj) {
           throw new BadRequestException(
             `No se puede aprobar la producción porque la referencia ${ref.nombre} no tiene tarifa definida para el oficio ${reg.etapa}`,
+          );
+        }
+
+        // Doble llave en el cálculo del monto: sin pares no se aprueba nada.
+        // `null * tarifa` daría 0 en silencio y congelaría el pago en cero.
+        if (reg.pares === null) {
+          throw new BadRequestException(
+            `El registro no tiene pares cargados; no se puede aprobar.`,
           );
         }
 
@@ -297,21 +398,30 @@ export class ProduccionService {
         );
       }
 
+      if (reg.estado === EstadoProduccion.ASIGNADO) {
+        throw new BadRequestException(
+          `No se puede revisar: el registro solo tiene el operario asignado. Cargue primero cuántos pares hizo.`,
+        );
+      }
+
       if (reg.estado !== EstadoProduccion.REGISTRADO) {
         throw new BadRequestException(
           `El registro de producción no está en estado REGISTRADO. Estado actual: ${reg.estado}`,
         );
       }
 
+      // Tras descartar ASIGNADO, `pares` siempre tiene valor.
+      const paresRegistrados = reg.pares ?? 0;
+
       const { paresAprobados } = dto;
-      if (paresAprobados < 0 || paresAprobados > reg.pares) {
+      if (paresAprobados < 0 || paresAprobados > paresRegistrados) {
         throw new BadRequestException(
-          `La cantidad de pares aprobados (${paresAprobados}) debe estar entre 0 y ${reg.pares}`,
+          `La cantidad de pares aprobados (${paresAprobados}) debe estar entre 0 y ${paresRegistrados}`,
         );
       }
 
       const motivoTrim = dto.motivo?.trim() ?? '';
-      const paresRechazados = reg.pares - paresAprobados;
+      const paresRechazados = paresRegistrados - paresAprobados;
       if (paresRechazados > 0 && !motivoTrim) {
         throw new BadRequestException('Indique el motivo del rechazo');
       }

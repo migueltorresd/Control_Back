@@ -25,6 +25,10 @@ export class UpdateValeDto {
   referenciaId?: string;
 
   @IsOptional()
+  @IsString({ message: 'El ID del administrativo debe ser un texto' })
+  creadoPorId?: string;
+
+  @IsOptional()
   @IsObject({
     message: 'Las tallas deben ser un objeto clave-valor (ej. {"38": 5})',
   })

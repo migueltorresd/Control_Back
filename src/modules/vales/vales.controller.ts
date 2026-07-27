@@ -20,7 +20,9 @@ import { ValePdfService } from './vale-pdf.service';
 import { CreateValeDto } from './dto/create-vale.dto';
 import { RegisterProduccionDto } from './dto/register-produccion.dto';
 import { UpdateProduccionEstadoDto } from './dto/update-produccion-estado.dto';
+import { CargarParesDto } from './dto/cargar-pares.dto';
 import { RevisarProduccionDto } from './dto/revisar-produccion.dto';
+import { AsignarResponsableDto } from './dto/asignar-responsable.dto';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Rol } from '../auth/enums/rol.enum';
 import { UsuarioAutenticado } from '../auth/jwt.strategy';
@@ -42,7 +44,8 @@ export class ValesController {
   @ApiOperation({ summary: 'Descargar el vale de producción en PDF (ADMIN)' })
   async descargarPdf(@Param('id') id: string, @Res() res: Response) {
     const vale = await this.valesService.findOne(id);
-    const pdf = await this.valePdfService.generar(vale);
+    const fotoModelo = await this.valesService.fotoDelModelo(vale.referenciaId);
+    const pdf = await this.valePdfService.generar(vale, { fotoModelo });
     res.set({
       'Content-Type': 'application/pdf',
       'Content-Disposition': `attachment; filename="vale-${vale.id}.pdf"`,
@@ -98,10 +101,27 @@ export class ValesController {
       color: dto.color,
       altura: dto.altura,
       referenciaId: dto.ref,
+      creadoPorId: dto.creadoPorId,
       tallas: tallasArray,
     });
 
     return this.mapToFrontend(created);
+  }
+
+  @Patch(':id/responsable')
+  @ApiOperation({
+    summary:
+      'Asignar el administrativo que autoriza / dio de alta el vale (ADMIN)',
+  })
+  async asignarResponsable(
+    @Param('id') id: string,
+    @Body() dto: AsignarResponsableDto,
+  ) {
+    const vale = await this.valesService.asignarResponsable(
+      id,
+      dto.creadoPorId,
+    );
+    return this.mapToFrontend(vale);
   }
 
   @Post(':id/registro')
@@ -148,6 +168,33 @@ export class ValesController {
       username,
     );
     return { success: true };
+  }
+
+  @Patch(':id/registro/:regId/pares')
+  @ApiOperation({
+    summary:
+      'Cargar cuántos pares hizo un operario asignado, al cierre de semana (ADMIN)',
+  })
+  async cargarPares(
+    @Param('id') valeId: string,
+    @Param('regId') regId: string,
+    @Body() dto: CargarParesDto,
+    @Req() req: Request & { user: UsuarioAutenticado },
+  ) {
+    const username = req.user?.username ?? undefined;
+    const saved = await this.produccionService.cargarPares(
+      valeId,
+      regId,
+      dto.pares,
+      username,
+    );
+    return {
+      id: saved.id,
+      operarioId: saved.operarioId,
+      pares: saved.pares,
+      estado: saved.estado,
+      montoPagado: Number(saved.montoPagado),
+    };
   }
 
   @Post(':id/registro/:regId/revision')
@@ -239,6 +286,12 @@ export class ValesController {
       ref: v.referenciaId,
       color: v.color,
       altura: v.altura,
+      creadoPorId: v.creadoPorId,
+      // El nombre viaja resuelto para que el front pinte la ficha sin pedir
+      // aparte la lista de administrativos.
+      creadoPor: v.creadoPor
+        ? { id: v.creadoPor.id, nombre: v.creadoPor.nombre }
+        : null,
       tallas: tallasObj,
       produccion,
       rechazos,
@@ -256,7 +309,8 @@ interface TallaRaw {
 interface ProduccionRegRaw {
   id: string;
   operarioId: string;
-  pares: number;
+  /** Null mientras el registro sea solo una asignación (estado `asignado`). */
+  pares: number | null;
   estado: string;
   montoPagado: number | string | null;
   revisadoPor: string | null;
@@ -279,6 +333,8 @@ interface ValeRaw {
   referenciaId: string;
   color: string;
   altura: string | null;
+  creadoPorId: string | null;
+  creadoPor: { id: string; nombre: string } | null;
   tallas: TallaRaw[];
   produccion: ProduccionRegRaw[];
   rechazos: RechazoRaw[];

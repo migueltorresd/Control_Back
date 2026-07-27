@@ -21,6 +21,7 @@ export class ValesRepository extends Repository<Vale> {
     return this.find({
       relations: {
         referencia: true,
+        creadoPor: true,
         tallas: true,
         produccion: { operario: true },
         rechazos: true,
@@ -44,6 +45,7 @@ export class ValesRepository extends Repository<Vale> {
       where,
       relations: {
         referencia: true,
+        creadoPor: true,
         tallas: true,
         produccion: { operario: true },
         rechazos: true,
@@ -59,6 +61,7 @@ export class ValesRepository extends Repository<Vale> {
       where: { id },
       relations: {
         referencia: true,
+        creadoPor: true,
         tallas: true,
         produccion: { operario: true },
         rechazos: true,
@@ -82,6 +85,7 @@ export class ValesRepository extends Repository<Vale> {
       color: string;
       altura?: string | null;
       referenciaId: string;
+      creadoPorId?: string | null;
     },
     tallasData: { talla: number; cantidad: number }[],
   ): Promise<Vale> {
@@ -109,6 +113,7 @@ export class ValesRepository extends Repository<Vale> {
         where: { id },
         relations: {
           referencia: true,
+          creadoPor: true,
           tallas: true,
           produccion: { operario: true },
           rechazos: true,
