@@ -68,8 +68,7 @@ export class ReferenciasService {
 
     // Si se está actualizando la receta, validar que los nuevos materiales existan
     let recetaConEntidades:
-      | { material: Material; cantidad: number }[]
-      | undefined = undefined;
+      { material: Material; cantidad: number }[] | undefined = undefined;
     if (dto.receta) {
       recetaConEntidades = [];
       for (const item of dto.receta) {
