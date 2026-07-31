@@ -74,7 +74,54 @@ Ver `.env.example` para la lista completa. Las variables requeridas son:
 
 La app **no arranca** si alguna variable requerida falta (fail-fast con Joi).
 
-## Despliegue en producción
+## Despliegue en producción (Render + Vercel + Neon)
+
+Es el despliegue que está en uso hoy. Más abajo queda documentado el stack
+alternativo con Docker Compose, para servidor propio.
+
+| Pieza | Dónde | Qué corre |
+|---|---|---|
+| API | Render (runtime Node, no Docker) | este repo |
+| Frontend | Vercel | `control-produccion` |
+| Base de datos | Neon (Postgres gestionado) | — |
+
+### Comandos en Render
+
+```
+Build Command:   pnpm install && pnpm build
+Start Command:   pnpm run start:prod
+```
+
+**El start tiene que ser `start:prod`, no `start`.** `pnpm start` ejecuta
+`nest start`, que levanta el compilador de TypeScript dentro del contenedor:
+en la instancia free de 512 MB eso termina en `Out of memory` antes de que la
+app llegue a escuchar. `start:prod` corre `node dist/main`, el JavaScript ya
+compilado.
+
+Como Render usa el runtime Node, **el `Dockerfile` de este repo no se aplica**
+ahí — aunque haga lo correcto. Solo se usa en el despliegue con Compose.
+
+### Migraciones
+
+No se corren solas ni en el arranque ni en el build: se ejecutan a mano
+apuntando a la URL **directa** de Neon (sin `-pooler`), antes de desplegar el
+código nuevo.
+
+```bash
+DATABASE_URL="<url-directa-de-produccion>" pnpm migration:run:prod
+```
+
+Conviene probarlas antes en un branch de Neon, que es instantáneo y se
+descarta si algo sale mal.
+
+### Notas de la instancia free
+
+- Se apaga por inactividad: la primera petición después de un rato puede tardar
+  ~50 s. No es un error, es el arranque en frío.
+- Si el proceso quedara justo al límite de memoria, se puede acotar el heap de
+  V8 con `NODE_OPTIONS=--max-old-space-size=460` en las variables de entorno.
+
+## Despliegue con Docker Compose (servidor propio)
 
 El stack se levanta con Docker Compose: **PostgreSQL + backend + Caddy** (reverse proxy con HTTPS automático). Caddy es el único servicio expuesto a internet (puertos 80/443); el backend y la BD quedan en la red interna.
 
