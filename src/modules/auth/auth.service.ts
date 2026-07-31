@@ -9,13 +9,15 @@ import * as bcrypt from 'bcrypt';
 import { AuthRepository } from './auth.repository';
 import { JwtPayload } from './jwt.strategy';
 import { Rol } from './enums/rol.enum';
+import { estaFiltrada } from '../../common/utils/password-breach.util';
 
 const BCRYPT_ROUNDS = 12;
-const PASSWORD_MIN_LENGTH = 10;
+// OWASP ASVS 2.1.1 exige 8 como piso y recomienda 12. Vamos por el recomendado.
+const PASSWORD_MIN_LENGTH = 12;
 
 export interface LoginResult {
   accessToken: string;
-  usuario: { username: string; rol: Rol };
+  usuario: { username: string; rol: Rol; debeCambiarPassword: boolean };
 }
 
 @Injectable()
@@ -42,6 +44,19 @@ export class AuthService {
       throw new UnauthorizedException('Credenciales inválidas');
     }
 
+    // Una contraseña temporal vencida no abre sesión: hay que pedir un reset
+    // nuevo. Se responde igual que unas credenciales inválidas para no
+    // confirmarle a un atacante que la cuenta existe y está en ese estado.
+    if (
+      usuario.passwordTemporalExpiraEn &&
+      usuario.passwordTemporalExpiraEn.getTime() < Date.now()
+    ) {
+      this.logger.warn(
+        `Login rechazado para "${username}": la contraseña temporal venció`,
+      );
+      throw new UnauthorizedException('Credenciales inválidas');
+    }
+
     this.logger.log(`Login exitoso de "${username}" desde ${ip}`);
 
     const payload: JwtPayload = {
@@ -54,7 +69,11 @@ export class AuthService {
 
     return {
       accessToken: await this.jwtService.signAsync(payload),
-      usuario: { username: usuario.username, rol: usuario.rol },
+      usuario: {
+        username: usuario.username,
+        rol: usuario.rol,
+        debeCambiarPassword: usuario.debeCambiarPassword,
+      },
     };
   }
 
@@ -77,6 +96,7 @@ export class AuthService {
     }
 
     AuthService.validarPoliticaPassword(passwordNueva, usuario.username);
+    await AuthService.validarPasswordNoFiltrada(passwordNueva);
 
     const passwordHash = await bcrypt.hash(passwordNueva, BCRYPT_ROUNDS);
     // Revoca todas las sesiones activas (incluida la actual): tras cambiar la
@@ -97,6 +117,24 @@ export class AuthService {
     if (password.toLowerCase() === username.toLowerCase()) {
       throw new BadRequestException(
         'La contraseña no puede ser igual al nombre de usuario',
+      );
+    }
+  }
+
+  /**
+   * Rechaza contraseñas que aparecen en filtraciones conocidas (ASVS 2.1.7).
+   * Se salta en tests y donde se desactive explícitamente, para no depender de
+   * la red en entornos sin salida a internet.
+   */
+  static async validarPasswordNoFiltrada(password: string): Promise<void> {
+    const desactivado =
+      process.env.NODE_ENV === 'test' ||
+      process.env.PASSWORD_BREACH_CHECK === 'false';
+    if (desactivado) return;
+
+    if (await estaFiltrada(password)) {
+      throw new BadRequestException(
+        'Esa contraseña aparece en filtraciones públicas conocidas. Elegí otra.',
       );
     }
   }

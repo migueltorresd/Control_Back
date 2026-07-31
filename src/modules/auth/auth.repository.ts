@@ -29,6 +29,9 @@ export class AuthRepository extends Repository<Usuario> {
       {
         passwordHash,
         tokenVersion: () => '"tokenVersion" + 1',
+        // La eligió su dueño: deja de ser temporal y no hay nada que forzar.
+        debeCambiarPassword: false,
+        passwordTemporalExpiraEn: null,
       },
     );
   }

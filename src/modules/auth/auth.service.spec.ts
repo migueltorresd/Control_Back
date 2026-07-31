@@ -24,6 +24,8 @@ describe('AuthService', () => {
     operarioId: null,
     activo: true,
     tokenVersion: 3,
+    debeCambiarPassword: false,
+    passwordTemporalExpiraEn: null as Date | null,
   });
 
   beforeEach(async () => {
@@ -77,5 +79,46 @@ describe('AuthService', () => {
       service.changePassword('uuid-1', 'ClaveMala', 'ClaveNueva4567'),
     ).rejects.toThrow(BadRequestException);
     expect(repository.updatePasswordAndRevoke).not.toHaveBeenCalled();
+  });
+
+  it('login con contraseña temporal vencida → 401 sin emitir token', async () => {
+    repository.findActiveByUsername.mockResolvedValue({
+      ...(await usuarioBase()),
+      debeCambiarPassword: true,
+      passwordTemporalExpiraEn: new Date(Date.now() - 60_000),
+    });
+
+    await expect(
+      service.login('admin', 'ClaveActual123', '1.2.3.4'),
+    ).rejects.toThrow(UnauthorizedException);
+    expect(jwtService.signAsync).not.toHaveBeenCalled();
+  });
+
+  it('login con temporal vigente sí entra, y avisa que debe cambiarla', async () => {
+    repository.findActiveByUsername.mockResolvedValue({
+      ...(await usuarioBase()),
+      debeCambiarPassword: true,
+      passwordTemporalExpiraEn: new Date(Date.now() + 3600_000),
+    });
+    jwtService.signAsync.mockResolvedValue('jwt-firmado');
+
+    const result = await service.login('admin', 'ClaveActual123', '1.2.3.4');
+
+    expect(result.usuario.debeCambiarPassword).toBe(true);
+  });
+
+  it('rechaza contraseñas de menos de 12 caracteres (ASVS 2.1.1)', () => {
+    expect(() =>
+      AuthService.validarPoliticaPassword('Corta12345', 'admin'),
+    ).toThrow(BadRequestException);
+    expect(() =>
+      AuthService.validarPoliticaPassword('DoceExactos1', 'admin'),
+    ).not.toThrow();
+  });
+
+  it('rechaza una contraseña igual al nombre de usuario', () => {
+    expect(() =>
+      AuthService.validarPoliticaPassword('administrador', 'administrador'),
+    ).toThrow(BadRequestException);
   });
 });

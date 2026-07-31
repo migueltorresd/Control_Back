@@ -19,6 +19,8 @@ export interface UsuarioAutenticado {
   username: string;
   rol: Rol;
   operarioId: string | null;
+  /** Contraseña puesta por un administrador: solo puede cambiarla. */
+  debeCambiarPassword: boolean;
 }
 
 @Injectable()
@@ -47,12 +49,24 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException('Sesión inválida o revocada');
     }
 
+    // Una contraseña temporal vencida no sirve ni para seguir la sesión ya
+    // abierta: si no la cambió a tiempo, hay que pedir un reset nuevo.
+    if (
+      usuario.passwordTemporalExpiraEn &&
+      usuario.passwordTemporalExpiraEn.getTime() < Date.now()
+    ) {
+      throw new UnauthorizedException(
+        'La contraseña temporal venció. Pedí un nuevo restablecimiento.',
+      );
+    }
+
     // Los datos frescos de la BD mandan (p. ej. un cambio de rol aplica ya)
     return {
       userId: usuario.id,
       username: usuario.username,
       rol: usuario.rol,
       operarioId: usuario.operarioId,
+      debeCambiarPassword: usuario.debeCambiarPassword,
     };
   }
 }

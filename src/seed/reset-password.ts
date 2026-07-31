@@ -5,6 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 import { randomBytes } from 'node:crypto';
 import { envValidationSchema } from '../config/env.validation';
+import { resolverDbSsl } from '../config/db-ssl';
 import { Usuario } from '../modules/auth/entities/usuario.entity';
 import { Operario } from '../modules/operarios/entities/operario.entity';
 import { Auditoria } from '../modules/auditoria/entities/auditoria.entity';
@@ -52,11 +53,21 @@ class ResetPasswordService {
     const password = process.env.RESET_PASSWORD ?? generarPasswordTemporal();
     const ejecutor = process.env.RESET_EJECUTOR ?? 'cli';
     const reactivar = process.env.RESET_ACTIVAR === 'true';
+    const horasVigencia = Number(process.env.RESET_HORAS ?? 24);
+    if (!Number.isFinite(horasVigencia) || horasVigencia <= 0) {
+      throw new Error('RESET_HORAS debe ser un número de horas mayor que cero');
+    }
+    const expiraEn = new Date(Date.now() + horasVigencia * 3600_000);
 
     // La política es la misma que aplica el cambio de contraseña de la app:
     // una contraseña puesta por CLI no puede ser más débil que una puesta por
     // el propio usuario.
     AuthService.validarPoliticaPassword(password, username);
+    // Solo si la eligió una persona: la generada son 96 bits de aleatoriedad,
+    // no puede estar en una filtración y consultarla sería una llamada al pedo.
+    if (!generada) {
+      await AuthService.validarPasswordNoFiltrada(password);
+    }
 
     const passwordHash = await AuthService.hashPassword(password);
 
@@ -86,6 +97,10 @@ class ResetPasswordService {
           // Mismo incremento que AuthRepository.updatePasswordAndRevoke:
           // revoca todos los tokens emitidos hasta ahora.
           tokenVersion: () => '"tokenVersion" + 1',
+          // La puso un administrador: el dueño la cambia antes de poder usar
+          // el sistema, y vence si no lo hace a tiempo.
+          debeCambiarPassword: true,
+          passwordTemporalExpiraEn: expiraEn,
           ...(reactivar ? { activo: true } : {}),
         },
       );
@@ -102,6 +117,8 @@ class ResetPasswordService {
             passwordGenerada: generada,
             reactivado: reactivar && !usuario.activo,
             sesionesRevocadas: true,
+            expiraEn: expiraEn.toISOString(),
+            horasVigencia,
           },
         }),
       );
@@ -117,11 +134,14 @@ class ResetPasswordService {
       console.log('');
       console.log('  Contraseña temporal: ' + password);
       console.log('');
-      console.log(
-        'Se muestra una sola vez. Entregala en persona o por un canal seguro,',
-      );
-      console.log('y pedile que la cambie apenas entre.');
+      console.log('Se muestra una sola vez: entregala por un canal seguro.');
     }
+    console.log(
+      `Vence en ${horasVigencia} h (${expiraEn.toLocaleString('es-CO')}).`,
+    );
+    console.log(
+      'Hasta que la cambie, la persona no puede usar el resto del sistema.',
+    );
   }
 }
 
@@ -135,11 +155,11 @@ class ResetPasswordService {
       inject: [ConfigService],
       useFactory: (config: ConfigService) => {
         const url = config.get<string>('DATABASE_URL');
-        const ssl =
-          config.get<boolean>('DATABASE_SSL') ||
-          url?.includes('sslmode=require')
-            ? { rejectUnauthorized: false }
-            : false;
+        const ssl = resolverDbSsl({
+          DATABASE_URL: url,
+          DATABASE_SSL: config.get<boolean>('DATABASE_SSL'),
+          DATABASE_SSL_INSECURE: config.get<boolean>('DATABASE_SSL_INSECURE'),
+        });
         return {
           type: 'postgres' as const,
           ...(url

@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import { DataSource } from 'typeorm';
+import { resolverDbSsl } from './db-ssl';
 
 /**
  * DataSource para el CLI de TypeORM (migration:generate, migration:run, migration:revert).
@@ -16,11 +17,8 @@ const ext = esCompilado ? 'js' : 'ts';
 
 // Si hay DATABASE_URL (p. ej. Neon en Render) se usa esa cadena; si no, las variables sueltas (Docker/local).
 const url = process.env.DATABASE_URL;
-// TLS: explícito con DATABASE_SSL=true, o automático si la URI trae sslmode=require.
-const ssl =
-  process.env.DATABASE_SSL === 'true' || url?.includes('sslmode=require')
-    ? { rejectUnauthorized: false }
-    : false;
+// TLS: se valida el certificado del servidor. Ver src/config/db-ssl.ts.
+const ssl = resolverDbSsl(process.env);
 
 export const AppDataSource = new DataSource({
   type: 'postgres',

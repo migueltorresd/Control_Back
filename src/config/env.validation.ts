@@ -30,8 +30,12 @@ export const envValidationSchema = Joi.object({
     then: Joi.optional(),
     otherwise: Joi.required(),
   }),
-  // TLS hacia la BD. Opcional: si la DATABASE_URL trae sslmode=require se activa solo.
+  // TLS hacia la BD. Opcional: si la DATABASE_URL trae sslmode se activa solo.
   DATABASE_SSL: Joi.boolean().default(false),
+  // Desactiva la validación del certificado del servidor. Solo para bases con
+  // certificado autofirmado en desarrollo: en producción deja la conexión
+  // expuesta a intercepción.
+  DATABASE_SSL_INSECURE: Joi.boolean().default(false),
 
   // Servidor
   PORT: Joi.number().integer().positive().default(3001),

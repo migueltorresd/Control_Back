@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { envValidationSchema } from '../config/env.validation';
+import { resolverDbSsl } from '../config/db-ssl';
 import { SeedService } from './seed.service';
 
 import { Material } from '../modules/materiales/entities/material.entity';
@@ -29,11 +30,11 @@ import { Rechazo } from '../modules/vales/entities/rechazo.entity';
       inject: [ConfigService],
       useFactory: (config: ConfigService) => {
         const url = config.get<string>('DATABASE_URL');
-        const ssl =
-          config.get<boolean>('DATABASE_SSL') ||
-          url?.includes('sslmode=require')
-            ? { rejectUnauthorized: false }
-            : false;
+        const ssl = resolverDbSsl({
+          DATABASE_URL: url,
+          DATABASE_SSL: config.get<boolean>('DATABASE_SSL'),
+          DATABASE_SSL_INSECURE: config.get<boolean>('DATABASE_SSL_INSECURE'),
+        });
         return {
           type: 'postgres' as const,
           ...(url

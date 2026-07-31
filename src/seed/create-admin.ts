@@ -5,6 +5,7 @@ import { TypeOrmModule, InjectRepository } from '@nestjs/typeorm';
 import { Injectable } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { envValidationSchema } from '../config/env.validation';
+import { resolverDbSsl } from '../config/db-ssl';
 import { Usuario } from '../modules/auth/entities/usuario.entity';
 import { Operario } from '../modules/operarios/entities/operario.entity';
 import { AuthService } from '../modules/auth/auth.service';
@@ -34,6 +35,7 @@ class CreateAdminService {
 
     // Misma política de contraseña que el cambio de contraseña de la app
     AuthService.validarPoliticaPassword(password, username);
+    await AuthService.validarPasswordNoFiltrada(password);
 
     const admin = this.usuarioRepo.create({
       username,
@@ -58,11 +60,11 @@ class CreateAdminService {
       inject: [ConfigService],
       useFactory: (config: ConfigService) => {
         const url = config.get<string>('DATABASE_URL');
-        const ssl =
-          config.get<boolean>('DATABASE_SSL') ||
-          url?.includes('sslmode=require')
-            ? { rejectUnauthorized: false }
-            : false;
+        const ssl = resolverDbSsl({
+          DATABASE_URL: url,
+          DATABASE_SSL: config.get<boolean>('DATABASE_SSL'),
+          DATABASE_SSL_INSECURE: config.get<boolean>('DATABASE_SSL_INSECURE'),
+        });
         return {
           type: 'postgres' as const,
           ...(url

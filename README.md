@@ -130,6 +130,16 @@ docker compose exec -T db psql -U <usuario> -d <base_nueva> < backup-AAAA-MM-DD.
 
 **Recomendación**: backup diario automatizado con `cron` (`pg_dump` a un directorio versionado o almacenamiento externo), reteniendo **14 diarios + 1 mensual**. Probar la restauración periódicamente — un backup no verificado no es un backup.
 
+### Conexión TLS a la base
+
+La conexión **valida el certificado del servidor** por defecto. Neon, Render y
+cualquier Postgres gestionado usan certificados de una CA pública, así que
+funcionan sin configuración extra.
+
+`DATABASE_SSL_INSECURE=true` desactiva esa validación. Solo para bases con
+certificado autofirmado en desarrollo: en producción deja la conexión expuesta
+a intercepción, y el arranque lo avisa por consola cada vez.
+
 ### Cuentas de acceso
 
 Mientras no exista la gestión de usuarios en la app, las cuentas se administran
@@ -154,6 +164,13 @@ RESET_USERNAME=<usuario> RESET_PASSWORD=<clave> RESET_EJECUTOR=<quien> pnpm rese
 # Si además está desactivado y hay que devolverle el acceso
 RESET_USERNAME=<usuario> RESET_ACTIVAR=true RESET_EJECUTOR=<quien> pnpm reset-password:prod
 ```
+
+La contraseña generada es **temporal de verdad**:
+
+- **Vence en 24 h** (ajustable con `RESET_HORAS`). Vencida no sirve ni para
+  entrar a cambiarla: hay que pedir un reset nuevo.
+- Hasta que la persona elija la suya, el sistema le responde **403 en todo**
+  salvo `PATCH /auth/password`. No es un aviso en pantalla, es un guard.
 
 El reset **incrementa `tokenVersion`**, así que toda sesión abierta con la
 contraseña anterior muere al instante — incluida la de quien haya robado el

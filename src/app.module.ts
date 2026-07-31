@@ -5,11 +5,13 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { envValidationSchema } from './config/env.validation';
+import { resolverDbSsl } from './config/db-ssl';
 
 // Autenticación (guards globales fail-closed)
 import { AuthModule } from './modules/auth/auth.module';
 import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from './modules/auth/guards/roles.guard';
+import { PasswordChangeRequiredGuard } from './modules/auth/guards/password-change-required.guard';
 
 // Interceptor global
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
@@ -37,11 +39,11 @@ import { HealthModule } from './modules/health/health.module';
         // Si hay DATABASE_URL (p. ej. Neon en Render) se usa esa cadena; si no, las variables sueltas (Docker/local).
         const url = config.get<string>('DATABASE_URL');
         // TLS: explícito con DATABASE_SSL=true, o automático si la URI trae sslmode=require.
-        const ssl =
-          config.get<boolean>('DATABASE_SSL') ||
-          url?.includes('sslmode=require')
-            ? { rejectUnauthorized: false }
-            : false;
+        const ssl = resolverDbSsl({
+          DATABASE_URL: url,
+          DATABASE_SSL: config.get<boolean>('DATABASE_SSL'),
+          DATABASE_SSL_INSECURE: config.get<boolean>('DATABASE_SSL_INSECURE'),
+        });
         return {
           type: 'postgres',
           ...(url
@@ -80,6 +82,9 @@ import { HealthModule } from './modules/health/health.module';
     // Fail-closed: primero autenticación, luego autorización por rol
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
+    // Último de la cadena: con una contraseña temporal vigente, lo único
+    // permitido es cambiarla.
+    { provide: APP_GUARD, useClass: PasswordChangeRequiredGuard },
     // Logger global HTTP
     { provide: APP_INTERCEPTOR, useClass: LoggingInterceptor },
   ],
