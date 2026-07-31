@@ -89,14 +89,18 @@ alternativo con Docker Compose, para servidor propio.
 
 ```
 Build Command:   pnpm install && pnpm build
-Start Command:   pnpm run start:prod
+Start Command:   pnpm start        (o pnpm run start:prod, es lo mismo)
 ```
 
-**El start tiene que ser `start:prod`, no `start`.** `pnpm start` ejecuta
-`nest start`, que levanta el compilador de TypeScript dentro del contenedor:
-en la instancia free de 512 MB eso termina en `Out of memory` antes de que la
-app llegue a escuchar. `start:prod` corre `node dist/main`, el JavaScript ya
-compilado.
+`start` y `start:prod` ejecutan ambos `node dist/main`, el JavaScript ya
+compilado. Para desarrollar se usa **`start:dev`**, que es el que recarga al
+guardar.
+
+Antes `start` era `nest start`, que levanta el compilador de TypeScript dentro
+del contenedor: en la instancia free de 512 MB eso terminaba en `Out of memory`
+antes de que la app llegara a escuchar. Se cambió porque las plataformas de
+despliegue ejecutan `start` por defecto, y ese comando tiene que ser el de
+producción.
 
 Como Render usa el runtime Node, **el `Dockerfile` de este repo no se aplica**
 ahí — aunque haga lo correcto. Solo se usa en el despliegue con Compose.
