@@ -29,6 +29,8 @@ lerna-debug.log*
 # El patrón cubre también los backup-prod-*.sql.
 *.sql
 *.dump
+# Los respaldos a JSON traen las mismas filas: mismo criterio.
+backup-*.json
 
 # Documentación interna de trabajo (no se versiona)
 /docs

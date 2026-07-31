@@ -16,6 +16,13 @@ export class Usuario {
   @Column({ unique: true })
   username: string;
 
+  /**
+   * Nombre real de la persona, para dirigirse a ella en la interfaz.
+   * Separado del `username`, que es la credencial con la que entra.
+   */
+  @Column({ type: 'varchar', nullable: true })
+  nombre: string | null;
+
   @Column()
   passwordHash: string;
 

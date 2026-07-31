@@ -17,7 +17,13 @@ const PASSWORD_MIN_LENGTH = 12;
 
 export interface LoginResult {
   accessToken: string;
-  usuario: { username: string; rol: Rol; debeCambiarPassword: boolean };
+  usuario: {
+    username: string;
+    /** Nombre para mostrar; null si la cuenta no lo tiene cargado. */
+    nombre: string | null;
+    rol: Rol;
+    debeCambiarPassword: boolean;
+  };
 }
 
 @Injectable()
@@ -71,6 +77,7 @@ export class AuthService {
       accessToken: await this.jwtService.signAsync(payload),
       usuario: {
         username: usuario.username,
+        nombre: usuario.nombre,
         rol: usuario.rol,
         debeCambiarPassword: usuario.debeCambiarPassword,
       },

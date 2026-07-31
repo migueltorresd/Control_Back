@@ -39,6 +39,8 @@ class CreateAdminService {
 
     const admin = this.usuarioRepo.create({
       username,
+      // Opcional: si no se pasa, la interfaz cae al username.
+      nombre: process.env.ADMIN_NOMBRE?.trim() || null,
       passwordHash: await AuthService.hashPassword(password),
       rol: Rol.ADMIN,
       operarioId: null,
