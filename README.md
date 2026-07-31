@@ -146,9 +146,29 @@ Mientras no exista la gestión de usuarios en la app, las cuentas se administran
 por CLI. Ambos comandos leen la conexión de `DATABASE_URL`.
 
 ```bash
-# Crear una cuenta (falla si el usuario ya existe)
+# Crear una cuenta (falla si el usuario ya existe). Nace como ADMIN.
 ADMIN_USERNAME=<usuario> ADMIN_PASSWORD=<clave> pnpm create-admin:prod
+
+# Cambiar el rol de una cuenta existente
+SET_ROL_USERNAME=<usuario> SET_ROL=SUPER_ADMIN SET_ROL_EJECUTOR=<quien> pnpm set-rol:prod
 ```
+
+#### Roles
+
+Son una **jerarquía**, no etiquetas sueltas: `SUPER_ADMIN` > `ADMIN` > `OPERARIO`.
+
+`@Roles(Rol.ADMIN)` deja pasar también a `SUPER_ADMIN`. Sin esa jerarquía, el rol
+más alto del sistema quedaría rechazado por no coincidir exactamente con el
+exigido — y habría que enumerar todos los roles válidos en cada controlador,
+que se rompe en cuanto alguien agrega un endpoint y se olvida de uno.
+
+`SUPER_ADMIN` está pensado para el dueño técnico del sistema: hoy tiene los
+mismos permisos efectivos que `ADMIN`, y su razón de ser aparece con la gestión
+de usuarios, donde solo él podrá administrar cuentas de nivel `ADMIN`.
+
+Cambiar el rol **revoca las sesiones** de esa cuenta: el rol viaja dentro del
+JWT, así que sin revocar seguiría operando con los permisos viejos hasta que el
+token expire.
 
 #### Recuperar una cuenta
 

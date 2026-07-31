@@ -28,7 +28,9 @@
     "create-admin": "ts-node -r tsconfig-paths/register src/seed/create-admin.ts",
     "create-admin:prod": "node dist/seed/create-admin.js",
     "reset-password": "ts-node -r tsconfig-paths/register src/seed/reset-password.ts",
-    "reset-password:prod": "node dist/seed/reset-password.js"
+    "reset-password:prod": "node dist/seed/reset-password.js",
+    "set-rol": "ts-node -r tsconfig-paths/register src/seed/set-rol.ts",
+    "set-rol:prod": "node dist/seed/set-rol.js"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",

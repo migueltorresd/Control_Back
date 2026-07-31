@@ -3,7 +3,7 @@ import { Reflector } from '@nestjs/core';
 import { Request } from 'express';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 import { ROLES_KEY } from '../decorators/roles.decorator';
-import { Rol } from '../enums/rol.enum';
+import { alcanzaRol, Rol } from '../enums/rol.enum';
 import { UsuarioAutenticado } from '../jwt.strategy';
 
 /**
@@ -35,6 +35,8 @@ export class RolesGuard implements CanActivate {
       .switchToHttp()
       .getRequest<Request & { user?: UsuarioAutenticado }>();
     const user = request.user;
-    return !!user && requiredRoles.includes(user.rol);
+    // Por jerarquía, no por coincidencia exacta: @Roles(ADMIN) también deja
+    // pasar a SUPER_ADMIN, que está por encima.
+    return !!user && requiredRoles.some((min) => alcanzaRol(user.rol, min));
   }
 }
