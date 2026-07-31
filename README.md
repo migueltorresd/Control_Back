@@ -130,6 +130,49 @@ docker compose exec -T db psql -U <usuario> -d <base_nueva> < backup-AAAA-MM-DD.
 
 **Recomendación**: backup diario automatizado con `cron` (`pg_dump` a un directorio versionado o almacenamiento externo), reteniendo **14 diarios + 1 mensual**. Probar la restauración periódicamente — un backup no verificado no es un backup.
 
+### Cuentas de acceso
+
+Mientras no exista la gestión de usuarios en la app, las cuentas se administran
+por CLI. Ambos comandos leen la conexión de `DATABASE_URL`.
+
+```bash
+# Crear una cuenta (falla si el usuario ya existe)
+ADMIN_USERNAME=<usuario> ADMIN_PASSWORD=<clave> pnpm create-admin:prod
+```
+
+#### Recuperar una cuenta
+
+Cuando alguien pierde su contraseña o se sospecha que se la robaron:
+
+```bash
+# Genera una contraseña temporal y la imprime una sola vez
+RESET_USERNAME=<usuario> RESET_EJECUTOR=<quien-lo-hace> pnpm reset-password:prod
+
+# O con una contraseña elegida a mano
+RESET_USERNAME=<usuario> RESET_PASSWORD=<clave> RESET_EJECUTOR=<quien> pnpm reset-password:prod
+
+# Si además está desactivado y hay que devolverle el acceso
+RESET_USERNAME=<usuario> RESET_ACTIVAR=true RESET_EJECUTOR=<quien> pnpm reset-password:prod
+```
+
+El reset **incrementa `tokenVersion`**, así que toda sesión abierta con la
+contraseña anterior muere al instante — incluida la de quien haya robado el
+token. Por eso este es el procedimiento correcto ante un robo de credenciales:
+cambiar la clave sin revocar sesiones deja al atacante adentro hasta que expire
+su JWT.
+
+Cada reset queda registrado en `auditorias` (`accion = 'RESET_PASSWORD'`) dentro
+de la misma transacción: si no se puede auditar, no se cambia la contraseña.
+Por eso conviene pasar siempre `RESET_EJECUTOR` con un nombre real.
+
+Entregá la contraseña temporal en persona o por un canal seguro, y pedí que la
+cambien desde la app apenas entren.
+
+> **Pendiente**: esto es el procedimiento de rescate, no la solución final.
+> Antes de crear cuentas para operarios o administrativos hace falta la gestión
+> de usuarios en la app (alta, baja y reset con auditoría desde la interfaz).
+> Con una sola cuenta el CLI alcanza; con diez, no.
+
 ## Arquitectura
 
 Monolito modular: `controller → service → repository` por módulo de negocio.

@@ -26,7 +26,9 @@
     "migration:run:prod": "typeorm -d dist/config/data-source.js migration:run",
     "seed": "ts-node -r tsconfig-paths/register src/seed/seed.ts",
     "create-admin": "ts-node -r tsconfig-paths/register src/seed/create-admin.ts",
-    "create-admin:prod": "node dist/seed/create-admin.js"
+    "create-admin:prod": "node dist/seed/create-admin.js",
+    "reset-password": "ts-node -r tsconfig-paths/register src/seed/reset-password.ts",
+    "reset-password:prod": "node dist/seed/reset-password.js"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
