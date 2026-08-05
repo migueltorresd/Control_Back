@@ -4,8 +4,10 @@ import {
   IsNumber,
   IsPositive,
   IsOptional,
-  IsIn,
+  IsEnum,
+  MaxLength,
 } from 'class-validator';
+import { TipoMaterial } from '../../../common/enums/tipo-material.enum';
 
 export class CreateMaterialDto {
   @IsOptional()
@@ -20,12 +22,25 @@ export class CreateMaterialDto {
   @IsString({ message: 'El proveedor debe ser un texto' })
   proveedor?: string;
 
+  /**
+   * Texto libre a propósito. Cada taller nombra sus unidades como las nombra
+   * ("PAR", "DECIMETRO", "Metro") y la base ya está llena con esas palabras.
+   * Una lista blanca acá rechazaba los datos que el propio sistema guardó.
+   */
   @IsNotEmpty({ message: 'La unidad de medida es requerida' })
   @IsString({ message: 'La unidad de medida debe ser un texto' })
-  @IsIn(['pie²', 'par', 'kg', 'unidad'], {
-    message: 'La unidad debe ser una de: pie², par, kg, unidad',
+  @MaxLength(30, {
+    message: 'La unidad no puede superar los 30 caracteres',
   })
   unidad: string;
+
+  /** Opcional: los materiales viejos no tienen tipo hasta que alguien los clasifique. */
+  @IsOptional()
+  @IsEnum(TipoMaterial, {
+    message:
+      'El tipo debe ser uno de: CORTE, GUARNICION, SOLADURA, FINIZAJE, OTROS',
+  })
+  tipo?: TipoMaterial;
 
   @IsNotEmpty({ message: 'El precio es requerido' })
   @IsNumber({}, { message: 'El precio debe ser un número' })

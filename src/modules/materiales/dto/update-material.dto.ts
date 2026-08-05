@@ -3,8 +3,10 @@ import {
   IsString,
   IsNumber,
   IsPositive,
-  IsIn,
+  IsEnum,
+  MaxLength,
 } from 'class-validator';
+import { TipoMaterial } from '../../../common/enums/tipo-material.enum';
 
 export class UpdateMaterialDto {
   @IsOptional()
@@ -15,12 +17,20 @@ export class UpdateMaterialDto {
   @IsString({ message: 'El proveedor debe ser un texto' })
   proveedor?: string;
 
+  /** Texto libre: ver la nota en `CreateMaterialDto`. */
   @IsOptional()
   @IsString({ message: 'La unidad de medida debe ser un texto' })
-  @IsIn(['pie²', 'par', 'kg', 'unidad'], {
-    message: 'La unidad debe ser una de: pie², par, kg, unidad',
+  @MaxLength(30, {
+    message: 'La unidad no puede superar los 30 caracteres',
   })
   unidad?: string;
+
+  @IsOptional()
+  @IsEnum(TipoMaterial, {
+    message:
+      'El tipo debe ser uno de: CORTE, GUARNICION, SOLADURA, FINIZAJE, OTROS',
+  })
+  tipo?: TipoMaterial;
 
   @IsOptional()
   @IsNumber({}, { message: 'El precio debe ser un número' })

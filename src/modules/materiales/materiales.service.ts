@@ -1,5 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { MaterialesRepository } from './materiales.repository';
+import {
+  FiltrosMaterial,
+  FiltrosMaterialPaginados,
+  MaterialesRepository,
+} from './materiales.repository';
 import { CreateMaterialDto } from './dto/create-material.dto';
 import { UpdateMaterialDto } from './dto/update-material.dto';
 import { Material } from './entities/material.entity';
@@ -8,8 +12,14 @@ import { Material } from './entities/material.entity';
 export class MaterialesService {
   constructor(private readonly repository: MaterialesRepository) {}
 
-  async findAll(): Promise<Material[]> {
-    return this.repository.findAllOrderedById();
+  async findAll(filtros: FiltrosMaterial = {}): Promise<Material[]> {
+    return this.repository.findAllOrderedById(filtros);
+  }
+
+  async findAllPaginated(
+    filtros: FiltrosMaterialPaginados,
+  ): Promise<{ data: Material[]; total: number }> {
+    return this.repository.findAllPaginated(filtros);
   }
 
   async findOne(id: string): Promise<Material> {
@@ -21,15 +31,12 @@ export class MaterialesService {
   }
 
   async create(dto: CreateMaterialDto): Promise<Material> {
-    const last = await this.repository.findLast();
-    const lastNum = last ? parseInt(last.id.split('-')[1], 10) : 0;
-    const nextId = 'MT-' + String(lastNum + 1).padStart(2, '0');
-
     return this.repository.createAndSave({
-      id: nextId,
+      id: await this.siguienteId(),
       nombre: dto.nombre,
       proveedor: dto.proveedor,
       unidad: dto.unidad,
+      tipo: dto.tipo ?? null,
       precio: dto.precio,
     });
   }
@@ -45,5 +52,23 @@ export class MaterialesService {
       );
     }
     return updated;
+  }
+
+  /**
+   * Siguiente ID de la serie `MT-NN`.
+   *
+   * Toma el máximo del sufijo numérico en vez del último id por orden
+   * alfabético: como texto, `'MT-99'` es mayor que `'MT-100'`, así que ordenar
+   * por id repetiría el 100 y reventaría contra la llave primaria en cuanto el
+   * catálogo pase de 99 materiales. Los ids ya emitidos no cambian.
+   */
+  private async siguienteId(): Promise<string> {
+    const existentes = await this.repository.find({ select: { id: true } });
+    const ultimo = existentes.reduce((max, { id }) => {
+      const num = parseInt(id.split('-')[1], 10);
+      return Number.isNaN(num) ? max : Math.max(max, num);
+    }, 0);
+
+    return 'MT-' + String(ultimo + 1).padStart(2, '0');
   }
 }
