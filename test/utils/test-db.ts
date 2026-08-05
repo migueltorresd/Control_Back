@@ -10,6 +10,11 @@ import { DomainConsistency1781353676977 } from '../../src/migrations/17813536769
 import { AlturaValeNullable1781371822097 } from '../../src/migrations/1781371822097-AlturaValeNullable';
 import { AddReferenciaImagenes1782950400000 } from '../../src/migrations/1782950400000-AddReferenciaImagenes';
 import { AddTokenVersion1783150000000 } from '../../src/migrations/1783150000000-AddTokenVersion';
+import { AddEstadoAsignado1783250000000 } from '../../src/migrations/1783250000000-AddEstadoAsignado';
+import { AddAdministrativos1783300000000 } from '../../src/migrations/1783300000000-AddAdministrativos';
+import { AddValeCreadoEn1783350000000 } from '../../src/migrations/1783350000000-AddValeCreadoEn';
+import { AddPasswordTemporal1783400000000 } from '../../src/migrations/1783400000000-AddPasswordTemporal';
+import { AddUsuarioNombre1783450000000 } from '../../src/migrations/1783450000000-AddUsuarioNombre';
 
 /** Base de datos dedicada para e2e — nunca la de desarrollo. */
 export const TEST_DB = 'control_produccion_test';
@@ -69,6 +74,11 @@ export async function prepararBaseDeDatosDeTest(): Promise<void> {
       AlturaValeNullable1781371822097,
       AddReferenciaImagenes1782950400000,
       AddTokenVersion1783150000000,
+      AddEstadoAsignado1783250000000,
+      AddAdministrativos1783300000000,
+      AddValeCreadoEn1783350000000,
+      AddPasswordTemporal1783400000000,
+      AddUsuarioNombre1783450000000,
     ],
   });
   await ds.initialize();
