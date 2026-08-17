@@ -41,8 +41,11 @@ export class VentasService {
   }
 
   async create(dto: CreateVentaDto): Promise<Venta> {
-    // 1. Validar que el vale exista
-    await this.valesService.findOne(dto.valeId);
+    // 1. Validar que el vale exista y esté vigente: no se vende producción de un
+    // vale que la administración dio de baja.
+    this.valesService.assertVigente(
+      await this.valesService.findOne(dto.valeId),
+    );
 
     // 2. Establecer fecha por defecto si no viene
     const fecha = dto.fecha || hoyLocal();
@@ -63,9 +66,11 @@ export class VentasService {
     // 1. Validar que la venta exista
     const venta = await this.findOne(id);
 
-    // 2. Validar que el vale exista si se está actualizando
+    // 2. Validar que el vale exista y esté vigente si se está reasignando
     if (dto.valeId) {
-      await this.valesService.findOne(dto.valeId);
+      this.valesService.assertVigente(
+        await this.valesService.findOne(dto.valeId),
+      );
     }
 
     // 3. Actualizar campos

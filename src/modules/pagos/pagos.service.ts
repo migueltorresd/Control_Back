@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { PagosRepository } from './pagos.repository';
 import { ProduccionService } from '../vales/produccion.service';
+import { ValesService } from '../vales/vales.service';
 import { Pago } from './entities/pago.entity';
 import { EstadoProduccion } from '../../common/enums/estado-produccion.enum';
 import { Oficio } from '../../common/enums/oficio.enum';
@@ -21,6 +22,7 @@ export class PagosService {
   constructor(
     private readonly repository: PagosRepository,
     private readonly produccionService: ProduccionService,
+    private readonly valesService: ValesService,
     private readonly auditoriaService: AuditoriaService,
   ) {}
 
@@ -85,6 +87,10 @@ export class PagosService {
       if (!vale) {
         throw new NotFoundException(`Vale con ID ${reg.valeId} no encontrado`);
       }
+
+      // Pagar producción de un vale anulado sacaría plata contra un documento
+      // que la administración ya dio de baja.
+      this.valesService.assertVigente(vale);
 
       const fecha = hoyLocal();
 
@@ -193,6 +199,11 @@ export class PagosService {
             `Vale con ID ${reg.valeId} no encontrado`,
           );
         }
+
+        // Un vale anulado en el lote hace fallar el lote entero: la transacción
+        // es una sola, y pagar «lo que se pueda» dejaría una liquidación parcial
+        // que nadie pidió.
+        this.valesService.assertVigente(vale);
 
         // 4. Generar el ID secuencial del pago
         const pagoId = await this.repository.nextId(manager);

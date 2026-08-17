@@ -40,7 +40,10 @@ describe('ProduccionService', () => {
       find: jest.fn(),
     },
   };
-  const valesService = { findOne: jest.fn() };
+  // `assertVigente` es no-op por defecto: su lógica se prueba en
+  // vales.service.spec.ts. Acá interesa que ProduccionService la invoque y
+  // aborte cuando lanza.
+  const valesService = { findOne: jest.fn(), assertVigente: jest.fn() };
   const operariosService = { findOne: jest.fn() };
   const referenciasService = { findOne: jest.fn() };
   const auditoriaService = { registrar: jest.fn() };

@@ -3,6 +3,7 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { PagosService } from './pagos.service';
 import { PagosRepository } from './pagos.repository';
 import { ProduccionService } from '../vales/produccion.service';
+import { ValesService } from '../vales/vales.service';
 import { Pago } from './entities/pago.entity';
 import { ProduccionReg } from '../vales/entities/produccion-reg.entity';
 import { Vale } from '../vales/entities/vale.entity';
@@ -42,6 +43,9 @@ describe('PagosService', () => {
   };
 
   const produccionService = { updateEstado: jest.fn() };
+  // No-op por defecto; su lógica vive en vales.service.spec.ts. Acá se prueba
+  // que PagosService la consulte y frene el pago si lanza.
+  const valesService = { assertVigente: jest.fn() };
   const auditoriaService = { registrar: jest.fn() };
 
   const regAprobado: Partial<ProduccionReg> = {
@@ -65,6 +69,7 @@ describe('PagosService', () => {
         PagosService,
         { provide: PagosRepository, useValue: repository },
         { provide: ProduccionService, useValue: produccionService },
+        { provide: ValesService, useValue: valesService },
         { provide: AuditoriaService, useValue: auditoriaService },
       ],
     }).compile();
@@ -86,6 +91,21 @@ describe('PagosService', () => {
     it('registro ya pagado → 400 (evita doble pago)', async () => {
       regEnBd = { ...regAprobado, estado: EstadoProduccion.PAGADO };
       await expect(service.pagar('reg-1')).rejects.toThrow(BadRequestException);
+    });
+
+    it('vale anulado → no se paga y no se inserta comprobante', async () => {
+      regEnBd = { ...regAprobado };
+      valeEnBd = { id: 'V-0001', referenciaId: 'REF-001' };
+      // `Once`, no `mockImplementation`: el beforeEach usa clearAllMocks, que
+      // borra las llamadas pero conserva las implementaciones, y esta se
+      // filtraría al resto de los tests haciendo fallar los caminos felices.
+      valesService.assertVigente.mockImplementationOnce(() => {
+        throw new BadRequestException('El vale V-0001 está anulado');
+      });
+
+      await expect(service.pagar('reg-1')).rejects.toThrow(BadRequestException);
+      expect(manager.insert).not.toHaveBeenCalled();
+      expect(produccionService.updateEstado).not.toHaveBeenCalled();
     });
 
     it('camino feliz: usa el monto congelado y marca pagado en la misma transacción', async () => {

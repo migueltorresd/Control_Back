@@ -14,7 +14,8 @@ describe('VentasService', () => {
     save: jest.fn(),
     remove: jest.fn(),
   };
-  const valesService = { findOne: jest.fn() };
+  // `assertVigente` no-op por defecto: su lógica se prueba en vales.service.spec.ts.
+  const valesService = { findOne: jest.fn(), assertVigente: jest.fn() };
 
   beforeEach(async () => {
     jest.resetAllMocks();

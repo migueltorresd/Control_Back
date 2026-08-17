@@ -55,6 +55,9 @@ export class ProduccionService {
     // 1. Validar que el vale exista (e inyectar sus tallas/relaciones)
     const vale = await this.valesService.findOne(valeId);
 
+    // 1b. Un vale anulado no autoriza trabajo nuevo.
+    this.valesService.assertVigente(vale);
+
     // 2. Validar que el operario exista
     await this.operariosService.findOne(dto.operarioId);
 
@@ -121,6 +124,7 @@ export class ProduccionService {
     }
 
     const vale = await this.valesService.findOne(valeId);
+    this.valesService.assertVigente(vale);
     const totalParesVale = vale.tallas.reduce((acc, t) => acc + t.cantidad, 0);
 
     // Carga y auditoría en la misma transacción: si algo falla, no queda ni el
@@ -398,6 +402,18 @@ export class ProduccionService {
         );
       }
 
+      // El vale se carga acá arriba —y no recién antes de calcular la tarifa—
+      // porque un vale anulado tiene que frenar la revisión ANTES de que se
+      // inserte el rechazo: aprobar dejaría un monto congelado y pagable contra
+      // un vale que ya no autoriza nada.
+      const vale = await manager.findOne(Vale, {
+        where: { id: reg.valeId },
+      });
+      if (!vale) {
+        throw new NotFoundException(`Vale ${reg.valeId} no encontrado`);
+      }
+      this.valesService.assertVigente(vale);
+
       if (reg.estado === EstadoProduccion.ASIGNADO) {
         throw new BadRequestException(
           `No se puede revisar: el registro solo tiene el operario asignado. Cargue primero cuántos pares hizo.`,
@@ -474,14 +490,6 @@ export class ProduccionService {
           paresAprobados: 0,
           paresRechazados,
         };
-      }
-
-      // Obtener el vale por separado para conocer la referencia
-      const vale = await manager.findOne(Vale, {
-        where: { id: reg.valeId },
-      });
-      if (!vale) {
-        throw new NotFoundException(`Vale ${reg.valeId} no encontrado`);
       }
 
       // 4. Si paresAprobados > 0: calcular tarifa y actualizar
