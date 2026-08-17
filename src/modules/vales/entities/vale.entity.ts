@@ -9,6 +9,7 @@ import {
 } from 'typeorm';
 import { Referencia } from '../../referencias/entities/referencia.entity';
 import { Administrativo } from '../../administrativos/entities/administrativo.entity';
+import { EstadoVale } from '../../../common/enums/estado-vale.enum';
 import { ValeTalla } from './vale-talla.entity';
 import { ProduccionReg } from './produccion-reg.entity';
 import { Rechazo } from './rechazo.entity';
@@ -62,6 +63,48 @@ export class Vale {
   @ManyToOne(() => Administrativo, { onDelete: 'RESTRICT', nullable: true })
   @JoinColumn({ name: 'creadoPorId' })
   creadoPor: Administrativo | null;
+
+  /**
+   * Vigente o anulado. Un vale nunca se borra — ver EstadoVale.
+   *
+   * `varchar` y no `enum` de Postgres a propósito: agregar un valor a un tipo
+   * enum en la base exige otra migración, y este estado puede crecer.
+   */
+  @Column({
+    type: 'varchar',
+    length: 20,
+    default: EstadoVale.ACTIVO,
+  })
+  estado: EstadoVale;
+
+  /**
+   * Última edición del vale. Es una caché para pintar la ficha sin joins: el
+   * historial completo (antes/después de cada campo, y el usuario autenticado
+   * que lo hizo) vive en `auditorias`.
+   */
+  @Column({ type: 'timestamptz', nullable: true })
+  modificadoEn: Date | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  modificadoPorId: string | null;
+
+  @ManyToOne(() => Administrativo, { onDelete: 'RESTRICT', nullable: true })
+  @JoinColumn({ name: 'modificadoPorId' })
+  modificadoPor: Administrativo | null;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  anuladoEn: Date | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  anuladoPorId: string | null;
+
+  @ManyToOne(() => Administrativo, { onDelete: 'RESTRICT', nullable: true })
+  @JoinColumn({ name: 'anuladoPorId' })
+  anuladoPor: Administrativo | null;
+
+  /** Por qué se anuló. Obligatorio en la API, nullable acá: los vigentes no tienen. */
+  @Column({ type: 'varchar', length: 300, nullable: true })
+  motivoAnulacion: string | null;
 
   @OneToMany(() => ValeTalla, (vt) => vt.vale, {
     cascade: true,

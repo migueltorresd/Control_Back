@@ -16,6 +16,7 @@ import { AddValeCreadoEn1783350000000 } from '../../src/migrations/1783350000000
 import { AddPasswordTemporal1783400000000 } from '../../src/migrations/1783400000000-AddPasswordTemporal';
 import { AddUsuarioNombre1783450000000 } from '../../src/migrations/1783450000000-AddUsuarioNombre';
 import { AddMaterialTipo1783500000000 } from '../../src/migrations/1783500000000-AddMaterialTipo';
+import { AddValeEstadoAnulacion1783550000000 } from '../../src/migrations/1783550000000-AddValeEstadoAnulacion';
 
 /** Base de datos dedicada para e2e — nunca la de desarrollo. */
 export const TEST_DB = 'control_produccion_test';
@@ -81,6 +82,7 @@ export async function prepararBaseDeDatosDeTest(): Promise<void> {
       AddPasswordTemporal1783400000000,
       AddUsuarioNombre1783450000000,
       AddMaterialTipo1783500000000,
+      AddValeEstadoAnulacion1783550000000,
     ],
   });
   await ds.initialize();
