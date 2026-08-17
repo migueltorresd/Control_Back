@@ -23,6 +23,8 @@ import { UpdateProduccionEstadoDto } from './dto/update-produccion-estado.dto';
 import { CargarParesDto } from './dto/cargar-pares.dto';
 import { RevisarProduccionDto } from './dto/revisar-produccion.dto';
 import { AsignarResponsableDto } from './dto/asignar-responsable.dto';
+import { ModificarValeDto } from './dto/modificar-vale.dto';
+import { AnularValeDto } from './dto/anular-vale.dto';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Rol } from '../auth/enums/rol.enum';
 import { UsuarioAutenticado } from '../auth/jwt.strategy';
@@ -106,6 +108,52 @@ export class ValesController {
     });
 
     return this.mapToFrontend(created);
+  }
+
+  @Patch(':id')
+  @ApiOperation({
+    summary:
+      'Modificar un vale que aún no tiene producción pagada (ADMIN). ' +
+      'La referencia no es modificable: para cambiarla, anule y emita uno nuevo.',
+  })
+  async modificar(
+    @Param('id') id: string,
+    @Body() dto: ModificarValeDto,
+    @Req() req: Request & { user: UsuarioAutenticado },
+  ) {
+    const tallas = dto.tallas
+      ? Object.entries(dto.tallas).map(([tallaStr, cant]) => ({
+          talla: parseInt(tallaStr, 10),
+          cantidad: cant,
+        }))
+      : undefined;
+
+    const vale = await this.valesService.modificar(
+      id,
+      { ...dto, tallas },
+      req.user?.username ?? undefined,
+    );
+    return this.mapToFrontend(vale);
+  }
+
+  @Post(':id/anulacion')
+  @ApiOperation({
+    summary:
+      'Anular un vale sin producción pagada (ADMIN). El vale no se elimina: ' +
+      'conserva su producción y su historia, y queda inhabilitado.',
+  })
+  async anular(
+    @Param('id') id: string,
+    @Body() dto: AnularValeDto,
+    @Req() req: Request & { user: UsuarioAutenticado },
+  ) {
+    const vale = await this.valesService.anular(
+      id,
+      dto.motivo,
+      dto.anuladoPorId,
+      req.user?.username ?? undefined,
+    );
+    return this.mapToFrontend(vale);
   }
 
   @Patch(':id/responsable')
@@ -292,6 +340,19 @@ export class ValesController {
       creadoPor: v.creadoPor
         ? { id: v.creadoPor.id, nombre: v.creadoPor.nombre }
         : null,
+      estado: v.estado,
+      // Rastro de la última edición y de la anulación. El nombre viaja resuelto,
+      // mismo criterio que `creadoPor`: la ficha lo pinta sin pedir la lista de
+      // administrativos aparte.
+      modificadoEn: v.modificadoEn,
+      modificadoPor: v.modificadoPor
+        ? { id: v.modificadoPor.id, nombre: v.modificadoPor.nombre }
+        : null,
+      anuladoEn: v.anuladoEn,
+      anuladoPor: v.anuladoPor
+        ? { id: v.anuladoPor.id, nombre: v.anuladoPor.nombre }
+        : null,
+      motivoAnulacion: v.motivoAnulacion,
       tallas: tallasObj,
       produccion,
       rechazos,
@@ -335,6 +396,12 @@ interface ValeRaw {
   altura: string | null;
   creadoPorId: string | null;
   creadoPor: { id: string; nombre: string } | null;
+  estado: string;
+  modificadoEn: Date | null;
+  modificadoPor: { id: string; nombre: string } | null;
+  anuladoEn: Date | null;
+  anuladoPor: { id: string; nombre: string } | null;
+  motivoAnulacion: string | null;
   tallas: TallaRaw[];
   produccion: ProduccionRegRaw[];
   rechazos: RechazoRaw[];

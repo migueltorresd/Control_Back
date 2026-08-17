@@ -13,7 +13,9 @@ import { ValeTalla } from './entities/vale-talla.entity';
 
 @Injectable()
 export class ValesRepository extends Repository<Vale> {
-  constructor(private dataSource: DataSource) {
+  // Público como en PagosRepository y ProduccionRepository: el servicio necesita
+  // abrir la transacción que envuelve el cambio del vale y su auditoría juntos.
+  constructor(public readonly dataSource: DataSource) {
     super(Vale, dataSource.createEntityManager());
   }
 
@@ -22,6 +24,8 @@ export class ValesRepository extends Repository<Vale> {
       relations: {
         referencia: true,
         creadoPor: true,
+        modificadoPor: true,
+        anuladoPor: true,
         tallas: true,
         produccion: { operario: true },
         rechazos: true,
@@ -46,6 +50,8 @@ export class ValesRepository extends Repository<Vale> {
       relations: {
         referencia: true,
         creadoPor: true,
+        modificadoPor: true,
+        anuladoPor: true,
         tallas: true,
         produccion: { operario: true },
         rechazos: true,
@@ -62,6 +68,8 @@ export class ValesRepository extends Repository<Vale> {
       relations: {
         referencia: true,
         creadoPor: true,
+        modificadoPor: true,
+        anuladoPor: true,
         tallas: true,
         produccion: { operario: true },
         rechazos: true,
@@ -120,6 +128,62 @@ export class ValesRepository extends Repository<Vale> {
         },
       });
       return result!;
+    });
+  }
+
+  /**
+   * Aplica los cambios de una modificación dentro de la transacción que le pasen
+   * (la abre el servicio, para que el UPDATE y su registro en `auditorias` vivan
+   * o mueran juntos).
+   *
+   * Si vienen tallas, el cuadro se REEMPLAZA entero: se borran las filas
+   * anteriores y se insertan las nuevas. Actualizar fila por fila obligaría a
+   * resolver altas, bajas y cambios a mano, y una talla que el usuario quitó
+   * quedaría viva por omisión.
+   */
+  async aplicarModificacion(
+    id: string,
+    cambios: Partial<Vale>,
+    tallasData: { talla: number; cantidad: number }[] | undefined,
+    manager: EntityManager,
+  ): Promise<void> {
+    if (Object.keys(cambios).length > 0) {
+      await manager.update(Vale, { id }, cambios);
+    }
+
+    if (tallasData) {
+      // Query builder y no `manager.delete(ValeTalla, { vale: { id } })`: en un
+      // DELETE, TypeORM no resuelve criterios anidados por relación. Se apunta
+      // directo a la FK, que se llama `valeId` (ver InitialSchema).
+      await manager
+        .createQueryBuilder()
+        .delete()
+        .from(ValeTalla)
+        .where('"valeId" = :id', { id })
+        .execute();
+      const tallas = tallasData.map((t) =>
+        manager.create(ValeTalla, { ...t, vale: { id } as Vale }),
+      );
+      await manager.save(ValeTalla, tallas);
+    }
+  }
+
+  /** Recarga con todas las relaciones, usando el manager de la transacción en curso. */
+  async findByIdWithRelationsEn(
+    id: string,
+    manager: EntityManager,
+  ): Promise<Vale | null> {
+    return manager.findOne(Vale, {
+      where: { id },
+      relations: {
+        referencia: true,
+        creadoPor: true,
+        modificadoPor: true,
+        anuladoPor: true,
+        tallas: true,
+        produccion: { operario: true },
+        rechazos: true,
+      },
     });
   }
 }
