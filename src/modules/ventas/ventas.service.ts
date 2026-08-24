@@ -1,4 +1,10 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
+import { EstadoDocumento } from '../../common/enums/estado-documento.enum';
+import { AdministrativosService } from '../administrativos/administrativos.service';
 import { VentasRepository } from './ventas.repository';
 import { ValesService } from '../vales/vales.service';
 import { CreateVentaDto } from './dto/create-venta.dto';
@@ -11,6 +17,7 @@ export class VentasService {
   constructor(
     private readonly repository: VentasRepository,
     private readonly valesService: ValesService,
+    private readonly administrativosService: AdministrativosService,
   ) {}
 
   async findAll(): Promise<Venta[]> {
@@ -84,8 +91,41 @@ export class VentasService {
     return this.findOne(id);
   }
 
-  async remove(id: string): Promise<void> {
+  /**
+   * Anula una venta. Reemplaza al borrado, que se quitó a propósito.
+   *
+   * El stock vuelve igual que antes —el conteo de vendidos ignora las
+   * anuladas—, pero ahora queda escrito quién deshizo la salida y por qué.
+   */
+  async anular(
+    id: string,
+    motivo: string,
+    anuladoPorId: string,
+  ): Promise<Venta> {
     const venta = await this.findOne(id);
-    await this.repository.remove(venta);
+
+    if (venta.estado === EstadoDocumento.ANULADO) {
+      throw new BadRequestException(`La venta ${id} ya está anulada.`);
+    }
+
+    // Un renglón de una remisión no se anula solo: ese papel ya lo firmó el
+    // cliente, y agujerearlo por dentro dejaría un documento entregado que no
+    // coincide con lo que dice el sistema. Se anula la remisión completa.
+    if (venta.remisionId) {
+      throw new BadRequestException(
+        `La venta ${id} pertenece a la remisión ${venta.remisionId}: ` +
+          'anula la remisión completa.',
+      );
+    }
+
+    await this.administrativosService.assertSeleccionable(anuladoPorId);
+
+    venta.estado = EstadoDocumento.ANULADO;
+    venta.motivoAnulacion = motivo.trim();
+    venta.anuladoPorId = anuladoPorId;
+    venta.anuladoEn = new Date();
+    await this.repository.save(venta);
+
+    return this.findOne(id);
   }
 }

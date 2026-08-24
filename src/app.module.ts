@@ -24,6 +24,7 @@ import { AdministrativosModule } from './modules/administrativos/administrativos
 import { ValesModule } from './modules/vales/vales.module';
 import { PagosModule } from './modules/pagos/pagos.module';
 import { VentasModule } from './modules/ventas/ventas.module';
+import { RemisionesModule } from './modules/remisiones/remisiones.module';
 import { AuditoriaModule } from './modules/auditoria/auditoria.module';
 import { HealthModule } from './modules/health/health.module';
 
@@ -72,6 +73,7 @@ import { HealthModule } from './modules/health/health.module';
     ValesModule,
     PagosModule,
     VentasModule,
+    RemisionesModule,
     AuditoriaModule,
     HealthModule,
   ],

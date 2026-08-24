@@ -3,7 +3,6 @@ import {
   Get,
   Post,
   Patch,
-  Delete,
   Body,
   Param,
   Query,
@@ -16,6 +15,7 @@ import { Venta } from './entities/venta.entity';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Rol } from '../auth/enums/rol.enum';
 import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
+import { AnularDto } from '../../common/dto/anular.dto';
 
 @ApiTags('Ventas y Despachos')
 @ApiBearerAuth()
@@ -69,14 +69,20 @@ export class VentasController {
     return this.mapToFrontend(updated);
   }
 
-  @Delete(':id')
+  @Post(':id/anulacion')
   @ApiOperation({
     summary:
-      'Eliminar una venta y devolver los pares al stock del vale (ADMIN)',
+      'Anular una venta (ADMIN). Reemplaza al borrado: los pares vuelven al ' +
+      'stock del vale igual que antes, pero queda el rastro de quién la ' +
+      'deshizo y por qué. Un renglón de una remisión se anula desde la remisión.',
   })
-  async remove(@Param('id') id: string) {
-    await this.ventasService.remove(id);
-    return { success: true };
+  async anular(@Param('id') id: string, @Body() dto: AnularDto) {
+    const venta = await this.ventasService.anular(
+      id,
+      dto.motivo,
+      dto.anuladoPorId,
+    );
+    return this.mapToFrontend(venta);
   }
 
   private mapToFrontend(v: Venta) {
@@ -89,6 +95,10 @@ export class VentasController {
       total: parseFloat((v.pares * v.precioUnitario).toFixed(2)),
       ref: v.vale?.referenciaId || null,
       color: v.vale?.color || null,
+      remision: v.remisionId,
+      estado: v.estado,
+      motivoAnulacion: v.motivoAnulacion,
+      anuladoEn: v.anuladoEn,
     };
   }
 }
