@@ -1,8 +1,10 @@
 import { Test } from '@nestjs/testing';
-import { NotFoundException } from '@nestjs/common';
+import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { VentasService } from './ventas.service';
 import { VentasRepository } from './ventas.repository';
 import { ValesService } from '../vales/vales.service';
+import { AdministrativosService } from '../administrativos/administrativos.service';
+import { EstadoDocumento } from '../../common/enums/estado-documento.enum';
 
 describe('VentasService', () => {
   let service: VentasService;
@@ -16,6 +18,7 @@ describe('VentasService', () => {
   };
   // `assertVigente` no-op por defecto: su lógica se prueba en vales.service.spec.ts.
   const valesService = { findOne: jest.fn(), assertVigente: jest.fn() };
+  const administrativosService = { assertSeleccionable: jest.fn() };
 
   beforeEach(async () => {
     jest.resetAllMocks();
@@ -24,6 +27,10 @@ describe('VentasService', () => {
         VentasService,
         { provide: VentasRepository, useValue: repository },
         { provide: ValesService, useValue: valesService },
+        {
+          provide: AdministrativosService,
+          useValue: administrativosService,
+        },
       ],
     }).compile();
     service = module.get(VentasService);
@@ -64,9 +71,60 @@ describe('VentasService', () => {
     expect(result.id).toBe('VT-0002');
   });
 
-  it('remove con venta inexistente → 404', async () => {
+  it('anular una venta inexistente → 404', async () => {
     repository.findByIdWithRelations.mockResolvedValue(null);
-    await expect(service.remove('VT-9999')).rejects.toThrow(NotFoundException);
-    expect(repository.remove).not.toHaveBeenCalled();
+    await expect(
+      service.anular('VT-9999', 'Devolución del cliente', 'ADM-01'),
+    ).rejects.toThrow(NotFoundException);
+    expect(repository.save).not.toHaveBeenCalled();
+  });
+
+  it('anular una venta ya anulada → 400', async () => {
+    repository.findByIdWithRelations.mockResolvedValue({
+      id: 'VT-0001',
+      estado: EstadoDocumento.ANULADO,
+      remisionId: null,
+    });
+    await expect(
+      service.anular('VT-0001', 'Devolución del cliente', 'ADM-01'),
+    ).rejects.toThrow(BadRequestException);
+    expect(repository.save).not.toHaveBeenCalled();
+  });
+
+  // El papel ya lo firmó el cliente: agujerearlo por dentro dejaría el
+  // documento entregado sin coincidir con el sistema.
+  it('anular un renglón de una remisión → 400', async () => {
+    repository.findByIdWithRelations.mockResolvedValue({
+      id: 'VT-0001',
+      estado: EstadoDocumento.ACTIVO,
+      remisionId: 'REM-0151',
+    });
+    await expect(
+      service.anular('VT-0001', 'Devolución del cliente', 'ADM-01'),
+    ).rejects.toThrow(BadRequestException);
+    expect(repository.save).not.toHaveBeenCalled();
+  });
+
+  it('anular una venta suelta la marca y deja el motivo', async () => {
+    const venta = {
+      id: 'VT-0001',
+      estado: EstadoDocumento.ACTIVO,
+      remisionId: null,
+    };
+    repository.findByIdWithRelations.mockResolvedValue(venta);
+
+    await service.anular('VT-0001', '  Devolución del cliente  ', 'ADM-01');
+
+    expect(administrativosService.assertSeleccionable).toHaveBeenCalledWith(
+      'ADM-01',
+    );
+    expect(repository.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        estado: EstadoDocumento.ANULADO,
+        motivoAnulacion: 'Devolución del cliente',
+        anuladoPorId: 'ADM-01',
+        anuladoEn: expect.any(Date) as Date,
+      }),
+    );
   });
 });
