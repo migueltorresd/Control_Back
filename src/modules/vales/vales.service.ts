@@ -4,6 +4,7 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
+import { EntityManager } from 'typeorm';
 import { ValesRepository } from './vales.repository';
 import { ReferenciasService } from '../referencias/referencias.service';
 import { AdministrativosService } from '../administrativos/administrativos.service';
@@ -105,6 +106,42 @@ export class ValesService {
       throw new BadRequestException(
         `El vale ${vale.id} está anulado y no admite operaciones. ` +
           `Motivo de la anulación: ${vale.motivoAnulacion ?? 'sin registrar'}.`,
+      );
+    }
+  }
+
+  /**
+   * Pares fabricados de un vale que todavía no salieron del depósito.
+   *
+   * Única fuente de verdad del stock en el backend. Ventas y remisiones la
+   * consultan; si cada una hiciera su propia cuenta, tarde o temprano darían
+   * números distintos para la misma mercancía.
+   */
+  stockDisponible(valeId: string, manager?: EntityManager): Promise<number> {
+    return this.repository.stockDisponible(valeId, manager);
+  }
+
+  /**
+   * Puerta para cualquier salida de mercancía: no se despacha lo que no hay.
+   *
+   * Hasta ahora esto solo lo impedía el frontend, así que un POST directo a la
+   * API dejaba remitir pares que no existen y el stock quedaba en negativo.
+   *
+   * Recibe el manager de la transacción en curso: validar fuera de ella deja
+   * una ventana en la que otra request se lleva los mismos pares entre el
+   * chequeo y el insert.
+   */
+  async assertStockSuficiente(
+    valeId: string,
+    pares: number,
+    manager?: EntityManager,
+  ): Promise<void> {
+    const disponible = await this.stockDisponible(valeId, manager);
+    if (pares > disponible) {
+      throw new BadRequestException(
+        `El vale ${valeId} solo tiene ${disponible} ${
+          disponible === 1 ? 'par disponible' : 'pares disponibles'
+        } y se intentan despachar ${pares}.`,
       );
     }
   }

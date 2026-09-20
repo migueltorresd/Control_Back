@@ -55,6 +55,27 @@ export class RemisionesService {
     const fecha = dto.fecha || hoyLocal();
 
     const numero = await this.dataSource.transaction(async (manager) => {
+      /**
+       * Stock, dentro de la transacción y sumado POR VALE.
+       *
+       * Sumado por vale porque dos renglones pueden salir del mismo: validando
+       * renglón por renglón, dos de 10 pares pasarían contra un stock de 15 y
+       * la remisión despacharía 20.
+       *
+       * Y dentro de la transacción porque validar antes de abrirla deja una
+       * ventana en la que otra request se lleva los mismos pares.
+       */
+      const paresPorVale = new Map<string, number>();
+      for (const item of dto.items) {
+        paresPorVale.set(
+          item.valeId,
+          (paresPorVale.get(item.valeId) ?? 0) + item.pares,
+        );
+      }
+      for (const [valeId, pares] of paresPorVale) {
+        await this.valesService.assertStockSuficiente(valeId, pares, manager);
+      }
+
       const numero = await this.repository.nextNumero(manager);
 
       await manager.insert(Remision, {

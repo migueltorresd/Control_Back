@@ -16,8 +16,13 @@ describe('VentasService', () => {
     save: jest.fn(),
     remove: jest.fn(),
   };
-  // `assertVigente` no-op por defecto: su lógica se prueba en vales.service.spec.ts.
-  const valesService = { findOne: jest.fn(), assertVigente: jest.fn() };
+  // `assertVigente` y `assertStockSuficiente` no-op por defecto: su lógica se
+  // prueba en vales.service.spec.ts. Acá solo importa que se llamen.
+  const valesService = {
+    findOne: jest.fn(),
+    assertVigente: jest.fn(),
+    assertStockSuficiente: jest.fn(),
+  };
   const administrativosService = { assertSeleccionable: jest.fn() };
 
   beforeEach(async () => {
