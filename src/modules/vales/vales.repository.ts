@@ -10,6 +10,8 @@ import {
 } from 'typeorm';
 import { Vale } from './entities/vale.entity';
 import { ValeTalla } from './entities/vale-talla.entity';
+import { ULTIMA_ETAPA } from '../../common/enums/oficio.enum';
+import { EstadoDocumento } from '../../common/enums/estado-documento.enum';
 
 @Injectable()
 export class ValesRepository extends Repository<Vale> {
@@ -186,6 +188,49 @@ export class ValesRepository extends Repository<Vale> {
       },
     });
   }
+
+  /**
+   * Pares de un vale que están fabricados y todavía no salieron.
+   *
+   * `fabricados - vendidos`, con el MISMO criterio que usa el frontend, porque
+   * un segundo criterio acá sería una segunda verdad: los dos números se
+   * mostrarían juntos en pantalla y un día dirían cosas distintas.
+   *
+   * - Fabricado = salió de la última etapa de la línea. Cuenta el registro de
+   *   producción aunque todavía no esté revisado ni pagado: el par existe
+   *   físicamente, y eso es lo que se puede despachar.
+   * - `pares` es nullable (una asignación sin cargar vale 0), de ahí el COALESCE
+   *   sobre la suma.
+   * - Las ventas anuladas NO descuentan: al anular, la mercancía volvió.
+   *
+   * El GREATEST a 0 espeja el `Math.max(0, ...)` del front: un stock negativo
+   * es un dato corrupto, y mostrarlo en negativo no ayuda a nadie.
+   *
+   * Recibe el manager de la transacción en curso para poder validar y escribir
+   * sin que otra request se cuele en el medio.
+   */
+  async stockDisponible(
+    valeId: string,
+    manager: EntityManager = this.manager,
+  ): Promise<number> {
+    const n = await queryScalarParams<string>(
+      manager,
+      `SELECT GREATEST(
+         COALESCE((
+           SELECT SUM(pr.pares) FROM produccion_registros pr
+           WHERE pr."valeId" = $1 AND pr.etapa = $2
+         ), 0)
+         -
+         COALESCE((
+           SELECT SUM(v.pares) FROM ventas v
+           WHERE v."valeId" = $1 AND v.estado = $3
+         ), 0)
+       , 0) AS n`,
+      [valeId, ULTIMA_ETAPA, EstadoDocumento.ACTIVO],
+      'n',
+    );
+    return Number(n);
+  }
 }
 
 /** Helper tipado para queries escalares de TypeORM (manager.query devuelve any[]) */
@@ -196,6 +241,19 @@ async function queryScalar<T>(
 ): Promise<T> {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const rows = await manager.query(sql);
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+  return rows[0][col] as T;
+}
+
+/** Igual que `queryScalar`, pero con parámetros ligados — nunca interpolados. */
+async function queryScalarParams<T>(
+  manager: EntityManager,
+  sql: string,
+  params: unknown[],
+  col: string,
+): Promise<T> {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  const rows = await manager.query(sql, params);
   // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
   return rows[0][col] as T;
 }

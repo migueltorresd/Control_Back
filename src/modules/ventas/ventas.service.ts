@@ -54,7 +54,10 @@ export class VentasService {
       await this.valesService.findOne(dto.valeId),
     );
 
-    // 2. Establecer fecha por defecto si no viene
+    // 2. No se vende lo que no está fabricado o ya salió.
+    await this.valesService.assertStockSuficiente(dto.valeId, dto.pares);
+
+    // 3. Establecer fecha por defecto si no viene
     const fecha = dto.fecha || hoyLocal();
 
     // 3. Crear y guardar (el ID lo genera la secuencia ventas_seq)

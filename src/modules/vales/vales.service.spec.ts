@@ -22,6 +22,7 @@ describe('ValesService', () => {
     crearConRelaciones: jest.fn(),
     aplicarModificacion: jest.fn(),
     update: jest.fn(),
+    stockDisponible: jest.fn(),
     dataSource: {
       transaction: jest.fn((cb: (m: unknown) => unknown) => cb(manager)),
     },
@@ -488,6 +489,36 @@ describe('ValesService', () => {
           }),
         ),
       ).toThrow(/duplicado del V-0007/);
+    });
+  });
+  describe('assertStockSuficiente', () => {
+    it('deja pasar cuando alcanza justo', async () => {
+      repository.stockDisponible.mockResolvedValue(10);
+      await expect(
+        service.assertStockSuficiente('V-0001', 10),
+      ).resolves.toBeUndefined();
+    });
+
+    it('rechaza cuando se piden mas pares de los que hay', async () => {
+      repository.stockDisponible.mockResolvedValue(3);
+      await expect(service.assertStockSuficiente('V-0001', 4)).rejects.toThrow(
+        /solo tiene 3 pares disponibles y se intentan despachar 4/,
+      );
+    });
+
+    // Sin stock el mensaje tiene que decirlo en plural igual: '0 pares'.
+    it('rechaza cuando no hay nada fabricado', async () => {
+      repository.stockDisponible.mockResolvedValue(0);
+      await expect(service.assertStockSuficiente('V-0001', 1)).rejects.toThrow(
+        /solo tiene 0 pares disponibles/,
+      );
+    });
+
+    it('propaga el manager de la transaccion en curso', async () => {
+      repository.stockDisponible.mockResolvedValue(5);
+      const mgr = { marca: 'tx' };
+      await service.assertStockSuficiente('V-0001', 1, mgr as never);
+      expect(repository.stockDisponible).toHaveBeenCalledWith('V-0001', mgr);
     });
   });
 });
