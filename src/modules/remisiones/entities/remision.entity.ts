@@ -8,6 +8,7 @@ import {
   Index,
 } from 'typeorm';
 import { Administrativo } from '../../administrativos/entities/administrativo.entity';
+import { Cliente } from '../../clientes/entities/cliente.entity';
 import { EstadoDocumento } from '../../../common/enums/estado-documento.enum';
 import { Venta } from '../../ventas/entities/venta.entity';
 import { FormaPago } from '../../../common/enums/forma-pago.enum';
@@ -32,6 +33,32 @@ export class Remision {
   @Column({ type: 'date' })
   fecha: string; // YYYY-MM-DD
 
+  /**
+   * Quién es el cliente, contra el catálogo. Es lo que agrupa la cartera:
+   * por id no hay forma de que un mismo cliente aparezca dos veces por haber
+   * escrito el nombre distinto.
+   *
+   * Nullable porque las remisiones anteriores al catálogo pudieron quedar sin
+   * vincular, y porque el documento vale por sí mismo aunque el cliente se
+   * borrara del catálogo.
+   */
+  @Index()
+  @Column({ type: 'varchar', nullable: true })
+  clienteId: string | null;
+
+  @ManyToOne(() => Cliente, { nullable: true, onDelete: 'RESTRICT' })
+  @JoinColumn({ name: 'clienteId' })
+  cliente: Cliente | null;
+
+  /**
+   * Los tres campos siguientes son una FOTO del cliente al emitir, no un
+   * reflejo del catálogo.
+   *
+   * Es a propósito y no es dato duplicado: la remisión es el documento que el
+   * cliente firmó. Si mañana se muda y se corrige su dirección en el catálogo,
+   * esta remisión tiene que seguir diciendo a dónde se despachó de verdad, o
+   * el PDF reimpreso dejaría de coincidir con el papel firmado.
+   */
   @Column({ length: 160 })
   clienteNombre: string;
 

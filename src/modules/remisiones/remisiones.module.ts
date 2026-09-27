@@ -8,6 +8,7 @@ import { RemisionPdfService } from './remision-pdf.service';
 import { VentasModule } from '../ventas/ventas.module';
 import { ValesModule } from '../vales/vales.module';
 import { AdministrativosModule } from '../administrativos/administrativos.module';
+import { ClientesModule } from '../clientes/clientes.module';
 import { AbonosModule } from '../abonos/abonos.module';
 
 @Module({
@@ -18,6 +19,8 @@ import { AbonosModule } from '../abonos/abonos.module';
     VentasModule,
     ValesModule,
     AdministrativosModule,
+    // Para validar el cliente del catálogo al emitir y copiar su ficha.
+    ClientesModule,
     // Ciclo real y a propósito: el listado de remisiones muestra el saldo,
     // y el saldo se calcula contra la remisión. forwardRef deja que Nest
     // resuelva los dos lados sin que ninguno tenga que existir primero.

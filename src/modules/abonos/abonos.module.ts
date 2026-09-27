@@ -4,6 +4,7 @@ import { Abono } from './entities/abono.entity';
 import { AbonosController } from './abonos.controller';
 import { AbonosService } from './abonos.service';
 import { AbonosRepository } from './abonos.repository';
+import { CarteraService } from './cartera.service';
 import { RemisionesModule } from '../remisiones/remisiones.module';
 import { AdministrativosModule } from '../administrativos/administrativos.module';
 
@@ -16,7 +17,7 @@ import { AdministrativosModule } from '../administrativos/administrativos.module
     AdministrativosModule,
   ],
   controllers: [AbonosController],
-  providers: [AbonosService, AbonosRepository],
-  exports: [AbonosService, AbonosRepository],
+  providers: [AbonosService, AbonosRepository, CarteraService],
+  exports: [AbonosService, AbonosRepository, CarteraService],
 })
 export class AbonosModule {}

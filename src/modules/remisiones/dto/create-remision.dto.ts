@@ -11,6 +11,7 @@ import {
   IsArray,
   ArrayMinSize,
   ValidateNested,
+  ValidateIf,
   MaxLength,
 } from 'class-validator';
 import { FormaPago } from '../../../common/enums/forma-pago.enum';
@@ -38,6 +39,21 @@ export class RemisionItemDto {
 }
 
 export class CreateRemisionDto {
+  /**
+   * Cliente del catálogo. Es la forma recomendada de emitir: los datos salen
+   * de un registro único, así que la cartera lo agrupa sin adivinar por el
+   * nombre.
+   */
+  @IsOptional()
+  @IsString({ message: 'El id del cliente debe ser un texto' })
+  clienteId?: string;
+
+  /**
+   * Solo obligatorio cuando NO se manda `clienteId`. Con cliente del catálogo
+   * los datos se toman de allí, y lo que llegue aquí los sobrescribe (sirve
+   * para una entrega puntual a otra dirección sin tocar el catálogo).
+   */
+  @ValidateIf((o: CreateRemisionDto) => !o.clienteId)
   @IsNotEmpty({ message: 'El nombre del cliente es requerido' })
   @IsString({ message: 'El nombre del cliente debe ser un texto' })
   @MaxLength(160, {

@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { EstadoDocumento } from '../../common/enums/estado-documento.enum';
 import { AdministrativosService } from '../administrativos/administrativos.service';
+import { ClientesService } from '../clientes/clientes.service';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 import { RemisionesRepository } from './remisiones.repository';
@@ -23,6 +24,7 @@ export class RemisionesService {
     private readonly ventasRepository: VentasRepository,
     private readonly valesService: ValesService,
     private readonly administrativosService: AdministrativosService,
+    private readonly clientesService: ClientesService,
   ) {}
 
   findAll(): Promise<Remision[]> {
@@ -76,14 +78,30 @@ export class RemisionesService {
         await this.valesService.assertStockSuficiente(valeId, pares, manager);
       }
 
+      /**
+       * Foto del cliente al emitir.
+       *
+       * Con cliente del catálogo los datos salen de allí, y lo que venga en el
+       * dto los sobrescribe (una entrega puntual a otra dirección no tiene por
+       * qué modificar el catálogo). Sin catálogo, se emite con lo que se
+       * escribió a mano, como siempre.
+       *
+       * Lo que queda grabado NO vuelve a cambiar aunque después se edite el
+       * cliente: es lo que dice el papel que se firmó.
+       */
+      const cliente = dto.clienteId
+        ? await this.clientesService.assertSeleccionable(dto.clienteId, manager)
+        : null;
+
       const numero = await this.repository.nextNumero(manager);
 
       await manager.insert(Remision, {
         numero,
         fecha,
-        clienteNombre: dto.clienteNombre,
-        clienteDocumento: dto.clienteDocumento ?? null,
-        clienteDireccion: dto.clienteDireccion ?? null,
+        clienteId: cliente?.id ?? null,
+        clienteNombre: dto.clienteNombre ?? cliente?.nombre ?? '',
+        clienteDocumento: dto.clienteDocumento ?? cliente?.documento ?? null,
+        clienteDireccion: dto.clienteDireccion ?? cliente?.direccion ?? null,
         formaPago: dto.formaPago,
         observaciones: dto.observaciones ?? null,
       });

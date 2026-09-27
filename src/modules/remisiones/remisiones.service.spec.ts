@@ -6,6 +6,7 @@ import { RemisionesRepository } from './remisiones.repository';
 import { VentasRepository } from '../ventas/ventas.repository';
 import { ValesService } from '../vales/vales.service';
 import { AdministrativosService } from '../administrativos/administrativos.service';
+import { ClientesService } from '../clientes/clientes.service';
 import { FormaPago } from '../../common/enums/forma-pago.enum';
 
 describe('RemisionesService', () => {
@@ -27,6 +28,7 @@ describe('RemisionesService', () => {
     assertStockSuficiente: jest.fn(),
   };
   const administrativosService = { assertSeleccionable: jest.fn() };
+  const clientesService = { assertSeleccionable: jest.fn() };
 
   const dto = (items: { valeId: string; pares: number }[]) => ({
     clienteNombre: 'Distribuciones El Portal',
@@ -47,6 +49,7 @@ describe('RemisionesService', () => {
           provide: AdministrativosService,
           useValue: administrativosService,
         },
+        { provide: ClientesService, useValue: clientesService },
       ],
     }).compile();
     service = module.get(RemisionesService);
@@ -128,5 +131,88 @@ describe('RemisionesService', () => {
     await expect(
       service.anular('REM-9999', 'Devolución completa', 'ADM-01'),
     ).rejects.toThrow(NotFoundException);
+  });
+
+  describe('cliente del catálogo', () => {
+    const cliente = {
+      id: 'CLI-0007',
+      nombre: 'Dotasif SAS',
+      documento: '900123456-7',
+      direccion: 'Cra 45 # 12-30',
+      telefono: '3105551234',
+      correo: null,
+      activo: true,
+      creadoEn: new Date(),
+    };
+
+    const conCliente = (extra = {}) => ({
+      clienteId: 'CLI-0007',
+      formaPago: FormaPago.CREDITO,
+      items: [{ valeId: 'V-0001', pares: 10, precioUnitario: 85000 }],
+      ...extra,
+    });
+
+    // El primer insert de la transacción es el de la remisión; los que siguen
+    // son sus renglones, que aquí no interesan.
+    let grabado: Record<string, unknown> = {};
+    const datosGrabados = () => grabado;
+
+    beforeEach(() => {
+      grabado = {};
+      manager.insert.mockImplementation(
+        (_entidad: unknown, valores: Record<string, unknown>) => {
+          if (Object.keys(grabado).length === 0) grabado = valores;
+          return Promise.resolve();
+        },
+      );
+    });
+
+    it('copia la ficha del catálogo a la remisión', async () => {
+      clientesService.assertSeleccionable.mockResolvedValue(cliente);
+
+      await service.create(conCliente() as never);
+
+      expect(datosGrabados()).toMatchObject({
+        clienteId: 'CLI-0007',
+        clienteNombre: 'Dotasif SAS',
+        clienteDocumento: '900123456-7',
+        clienteDireccion: 'Cra 45 # 12-30',
+      });
+    });
+
+    it('deja sobrescribir la dirección sin tocar el catálogo', async () => {
+      clientesService.assertSeleccionable.mockResolvedValue(cliente);
+
+      // Una entrega puntual a otra bodega no cambia dónde vive el cliente.
+      await service.create(
+        conCliente({ clienteDireccion: 'Bodega norte, Km 4' }) as never,
+      );
+
+      expect(datosGrabados()).toMatchObject({
+        clienteId: 'CLI-0007',
+        clienteDireccion: 'Bodega norte, Km 4',
+      });
+    });
+
+    it('no emite a un cliente inactivo', async () => {
+      clientesService.assertSeleccionable.mockRejectedValue(
+        new BadRequestException('está inactivo'),
+      );
+
+      await expect(service.create(conCliente() as never)).rejects.toThrow(
+        BadRequestException,
+      );
+      expect(manager.insert).not.toHaveBeenCalled();
+    });
+
+    it('sigue emitiendo sin catálogo, con el nombre escrito a mano', async () => {
+      await service.create(dto([{ valeId: 'V-0001', pares: 10 }]));
+
+      expect(clientesService.assertSeleccionable).not.toHaveBeenCalled();
+      expect(datosGrabados()).toMatchObject({
+        clienteId: null,
+        clienteNombre: 'Distribuciones El Portal',
+      });
+    });
   });
 });
