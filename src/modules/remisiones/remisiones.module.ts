@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Remision } from './entities/remision.entity';
 import { RemisionesController } from './remisiones.controller';
@@ -8,6 +8,7 @@ import { RemisionPdfService } from './remision-pdf.service';
 import { VentasModule } from '../ventas/ventas.module';
 import { ValesModule } from '../vales/vales.module';
 import { AdministrativosModule } from '../administrativos/administrativos.module';
+import { AbonosModule } from '../abonos/abonos.module';
 
 @Module({
   imports: [
@@ -17,6 +18,10 @@ import { AdministrativosModule } from '../administrativos/administrativos.module
     VentasModule,
     ValesModule,
     AdministrativosModule,
+    // Ciclo real y a propósito: el listado de remisiones muestra el saldo,
+    // y el saldo se calcula contra la remisión. forwardRef deja que Nest
+    // resuelva los dos lados sin que ninguno tenga que existir primero.
+    forwardRef(() => AbonosModule),
   ],
   controllers: [RemisionesController],
   providers: [RemisionesService, RemisionesRepository, RemisionPdfService],
