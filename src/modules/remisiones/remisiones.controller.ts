@@ -102,6 +102,10 @@ export class RemisionesController {
     return {
       numero: r.numero,
       fecha: r.fecha,
+      // Va junto al nombre a propósito: el id dice QUIÉN es el cliente y el
+      // nombre dice qué decía el papel. Sin el id, la pantalla no puede
+      // relacionar la remisión con la ficha del catálogo.
+      clienteId: r.clienteId,
       clienteNombre: r.clienteNombre,
       clienteDocumento: r.clienteDocumento,
       clienteDireccion: r.clienteDireccion,
