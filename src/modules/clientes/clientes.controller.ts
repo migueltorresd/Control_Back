@@ -31,7 +31,7 @@ export class ClientesController {
   @Post()
   @ApiOperation({
     summary:
-      'Da de alta un cliente (ADMIN). Rechaza nombres repetidos ignorando ' +
+      'Crea un cliente (ADMIN). Rechaza nombres repetidos ignorando ' +
       'tildes, puntuación y mayúsculas, y documentos ya cargados.',
   })
   create(@Body() dto: CreateClienteDto) {
