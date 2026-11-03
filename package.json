@@ -1,6 +1,6 @@
 {
   "name": "control-produccion-back",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Backend NestJS para el control de producción, pagos de operarios e inventario de una fábrica de calzado",
   "author": "Miguel Angel Torres Diaz",
   "private": true,
