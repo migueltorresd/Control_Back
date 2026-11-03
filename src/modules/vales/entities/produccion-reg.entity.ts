@@ -4,6 +4,7 @@ import {
   PrimaryGeneratedColumn,
   ManyToOne,
   JoinColumn,
+  CreateDateColumn,
 } from 'typeorm';
 import { Vale } from './vale.entity';
 import { Operario } from '../../operarios/entities/operario.entity';
@@ -60,4 +61,17 @@ export class ProduccionReg {
 
   @Column({ type: 'timestamp', nullable: true })
   revisadoEn: Date | null;
+
+  /**
+   * Cuándo se anotó esta producción. Es lo que permite medir el ritmo del
+   * taller: cuánto se sacó esta semana, si se produce más que el mes pasado,
+   * cuánto rinde cada operario en el tiempo.
+   *
+   * Nullable porque los registros anteriores a esta columna no la tienen:
+   * se rellenaron con la fecha de revisión o la del pago donde existía, y lo
+   * que no tenía ninguna quedó vacío. Un hueco es más honesto que una fecha
+   * inventada, así que todo lo que lea esta columna debe tolerar el null.
+   */
+  @CreateDateColumn({ type: 'timestamptz', nullable: true })
+  creadoEn: Date | null;
 }

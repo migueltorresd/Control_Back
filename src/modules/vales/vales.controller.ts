@@ -300,6 +300,10 @@ export class ValesController {
             montoPagado: Number(r.montoPagado),
             revisadoPor: r.revisadoPor,
             revisadoEn: r.revisadoEn,
+            // Con qué fecha se anotó: es lo que permite medir producción por
+            // día. Viene null en los registros anteriores a que existiera
+            // esta columna.
+            creadoEn: r.creadoEn,
             etapa: r.etapa,
           });
         }
@@ -376,6 +380,8 @@ interface ProduccionRegRaw {
   montoPagado: number | string | null;
   revisadoPor: string | null;
   revisadoEn: Date | string | null;
+  /** Null en los registros anteriores a que se empezara a guardar la fecha. */
+  creadoEn: Date | string | null;
   etapa: string;
 }
 
